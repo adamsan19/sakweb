@@ -971,8 +971,8 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
     index_dir = output / "index"
     detail_dir = output / "detail"
 
-    index_dir.mkdir(exist_ok=True)
-    detail_dir.mkdir(exist_ok=True)
+    index_dir.mkdir(parents=True, exist_ok=True)
+    detail_dir.mkdir(parents=True, exist_ok=True)
 
     # Batch sharding: gunakan MD5 hex (00-ff) untuk 256 shard files
     batch_shards: Dict[str, List[Dict]] = {}
@@ -1065,7 +1065,7 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
         else:
             # Jika items > PREFIX2_LIMIT, buat subdirectory dan split by prefix-3
             subdir = index_dir / p2
-            subdir.mkdir(exist_ok=True)
+            subdir.mkdir(parents=True, exist_ok=True)
             bucket3: Dict[str, List[Dict]] = {}
 
             for item in items:
@@ -1137,7 +1137,7 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
 def generate_static_list_files(videos: List[Dict], per_page: int = 100):
     output = Path("public/data")
     list_dir = output / "list"
-    list_dir.mkdir(exist_ok=True)
+    list_dir.mkdir(parents=True, exist_ok=True)
 
     total = len(videos)
     total_pages = (total + per_page - 1) // per_page
