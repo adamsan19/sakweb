@@ -1,266 +1,110 @@
-# Video Portal
+# Video Site Project
 
-A complete, production-ready video portal system built with PHP and Python. Features a modern web interface for browsing, searching, and managing video collections with high performance caching and asynchronous data fetching.
+Proyek ini adalah situs web video statis yang dihosting di Cloudflare Pages dengan fungsionalitas serverless menggunakan Cloudflare Functions.
 
-## 🚀 Features
+## Struktur Proyek
 
-### Core Functionality
-- **Paginated Video Gallery**: Browse videos with efficient pagination
-- **Advanced Search**: Search across titles, tags, and descriptions
-- **Video Details**: Detailed view for individual videos
-- **Caching System**: Multi-level caching for optimal performance
-- **Asynchronous Data Fetching**: Background script execution for data collection
+- `/public`: Berisi file statis (HTML, images, data).
+- `/functions`: Berisi logika serverless (Cloudflare Functions).
+- `wrangler.toml`: Konfigurasi untuk Cloudflare Wrangler.
 
-### Technical Features
-- **Production Ready**: Comprehensive error handling and logging
-- **Security**: Input validation, sanitization, and secure file handling
-- **Responsive Design**: Mobile-friendly interface
-- **RESTful API**: JSON-based communication for AJAX operations
-- **Modular Architecture**: Clean separation of concerns
+## Cara Deploy ke Cloudflare
 
-### Performance Optimizations
-- File-based caching with automatic expiration
-- Lazy loading for images
-- Concurrent data fetching with Python asyncio
-- Database-free operation for simplicity
+### 1. Melalui Cloudflare Dashboard (Direkomendasikan)
 
-## 📁 Project Structure
+Metode ini paling mudah jika kode Anda ada di GitHub atau GitLab.
 
-```
-video-portal/
-├── app/
-│   ├── config/
-│   │   └── AppConfig.php          # Application configuration
-│   ├── core/
-│   │   ├── VideoCache.php         # Caching system
-│   │   ├── VideoManager.php       # Video data management
-│   │   └── PythonExecutor.php     # Python script execution
-│   └── utils/
-│       └── Helpers.php            # Utility functions
-├── public/
-│   ├── index.php                  # Main gallery page
-│   ├── video_detail.php           # Video detail page
-│   ├── run_fetch.php              # Script execution interface
-│   └── assets/
-│       ├── css/
-│       │   └── style.css          # Main stylesheet
-│       └── js/
-│           └── app.js             # Client-side functionality
-├── storage/
-│   ├── cache/                     # Cache files
-│   ├── logs/                      # Application logs
-│   └── output/                    # Processed video data
-└── scripts/
-    └── main_async_fetch.py        # Data fetching script
-```
-
-## 🛠️ Installation & Setup
-
-### Prerequisites
-- PHP 7.4 or higher
-- Python 3.8 or higher
-- Web server (Apache/Nginx) with PHP support
-- Write permissions for storage directories
-
-### Installation Steps
-
-1. **Clone or download the project**
-   ```bash
-   cd /path/to/your/web/root
-   # Place the video-portal directory here
-   ```
-
-2. **Set permissions**
-   ```bash
-   chmod -R 755 video-portal/
-   chmod -R 777 video-portal/storage/
-   ```
-
-3. **Configure web server**
-   - Point your web server document root to `video-portal/public/`
-   - Ensure URL rewriting is enabled for clean URLs
-
-4. **Configure Python script** (optional)
-   - Edit `scripts/main_async_fetch.py` to configure data sources
-   - Update API endpoints and authentication if needed
-
-## 🔧 Configuration
-
-### AppConfig.php
-Main configuration file located at `app/config/AppConfig.php`:
-
-```php
-class AppConfig {
-    const CACHE_ENABLED = true;           // Enable/disable caching
-    const CACHE_DURATION = 300;           // Cache duration in seconds
-    const ITEMS_PER_PAGE = 200;           // Videos per page
-    const MAX_SEARCH_RESULTS = 100;       // Maximum search results
-}
-```
-
-### Python Script Configuration
-Edit `scripts/main_async_fetch.py` to configure:
-
-- API endpoints for data fetching
-- Authentication credentials
-- Request timeouts and retry logic
-- Output directory paths
-
-## 📖 Usage
-
-### Web Interface
-
-1. **Main Gallery**: Visit the root URL to browse videos
-2. **Search**: Use the search bar to find specific videos
-3. **Video Details**: Click any video card to view details
-4. **Script Execution**: Visit `run_fetch.php` to manage data fetching
-
-### Data Fetching
-
-Execute the Python script to fetch video data:
-
-```bash
-# Asynchronous execution (recommended)
-cd scripts/
-python3 main_async_fetch.py
-
-# Or use the web interface at run_fetch.php
-```
-
-### Cache Management
-
-- **Auto-clear**: Cache automatically expires based on `CACHE_DURATION`
-- **Manual clear**: Use the "Clear Cache" button in the web interface
-- **Cache types**: Pages, search results, and individual videos
-
-## 🔍 API Endpoints
-
-### Video Data
-- `GET /?page={number}` - Get paginated video data
-- `GET /?search={query}` - Search videos
-- `GET /video_detail.php?filecode={code}` - Get video details
-
-### Script Execution
-- `POST /run_fetch.php` - Execute data fetching script
-- `POST /run_fetch.php?action=status` - Get execution status
-- `POST /run_fetch.php?action=logs` - Get execution logs
-
-## 🏗️ Architecture
-
-### Core Components
-
-1. **AppConfig**: Central configuration management
-2. **VideoManager**: Business logic for video operations
-3. **VideoCache**: File-based caching system
-4. **PythonExecutor**: Script execution and monitoring
-5. **Helpers**: Utility functions for common operations
-
-### Data Flow
-
-1. **Request** → VideoManager → Cache check
-2. **Cache miss** → Load from JSON files → Cache storage
-3. **Response** → Render with templates
-
-### Caching Strategy
-
-- **Pages**: Full page data cached for 5 minutes
-- **Search**: Query results cached with MD5 hash keys
-- **Videos**: Individual video data cached by filecode
-
-## 🔒 Security Features
-
-- Input sanitization and validation
-- XSS protection with htmlspecialchars
-- CSRF protection for forms
-- Secure file permissions
-- Protected storage directory with .htaccess
-
-## 📊 Performance
-
-### Benchmarks (approximate)
-- Page load: < 100ms (cached)
-- Search: < 200ms for 1000+ videos
-- Cache hit ratio: > 90%
-- Memory usage: < 50MB for 10k videos
-
-### Optimizations
-- Lazy image loading
-- Minified CSS/JS
-- Efficient JSON parsing
-- Concurrent Python requests
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Permission errors**
-   ```bash
-   chmod -R 777 storage/
-   ```
-
-2. **Cache not working**
-   - Check storage/cache/ permissions
-   - Verify CACHE_ENABLED = true
-
-3. **Python script fails**
-   - Check Python 3 installation
-   - Verify script permissions
-   - Check logs in storage/logs/
-
-4. **No video data**
-   - Run the Python script first
-   - Check storage/output/ for JSON files
-
-### Debug Mode
-
-Enable debug logging in AppConfig.php:
-```php
-const DEBUG_MODE = true;
-```
-
-## 📝 Development
-
-### Adding New Features
-
-1. **Core classes**: Extend VideoManager for new functionality
-2. **Templates**: Add new PHP templates in public/templates/
-3. **Frontend**: Extend app.js for client-side features
-4. **Styling**: Modify style.css for UI changes
-
-### Code Standards
-
-- PSR-4 autoloading
-- Comprehensive PHPDoc comments
-- Error handling with try/catch
-- Input validation on all user data
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is open source. Feel free to use, modify, and distribute.
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review application logs in storage/logs/
-3. Ensure all prerequisites are met
-
-## 🔄 Changelog
-
-### Version 1.0.0
-- Initial release
-- Complete video portal functionality
-- Production-ready architecture
-- Comprehensive documentation
+1.  Login ke [Cloudflare Dashboard](https://dash.cloudflare.com/).
+2.  Buka **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**.
+3.  Pilih repositori Anda.
+4.  Di bagian **Build settings**:
+    *   **Framework preset**: None
+    *   **Build command**: (Kosongkan)
+    *   **Build output directory**: `public`
+5.  Klik **Save and Deploy**.
+6.  Cloudflare akan secara otomatis mendeteksi folder `functions` dan men-deploy-nya sebagai Functions.
 
 ---
 
-**Built with ❤️ for high-performance video content management**
+### 2. Melalui Wrangler CLI
+
+Metode ini berguna untuk deployment manual langsung dari terminal.
+
+1.  **Install Wrangler:**
+    ```bash
+    npm install -g wrangler
+    ```
+
+2.  **Login ke Cloudflare:**
+    ```bash
+    wrangler login
+    ```
+
+3.  **Deploy Proyek:**
+    Jalankan perintah berikut di root direktori proyek:
+    ```bash
+    wrangler pages deploy ./public
+    ```
+    *Wrangler akan otomatis mengunggah isi folder `./public` dan memproses folder `functions` di root.*
+
+---
+
+## Pengembangan Lokal
+
+Untuk menjalankan proyek secara lokal menggunakan Wrangler:
+
+```bash
+wrangler pages dev ./public
+```
+Proyek akan berjalan di `http://localhost:8788`.
+## Otomatisasi Pembaruan Data
+
+Skrip sedot.py ...
+## Otomatisasi Pembaruan Data
+
+Skrip `sedot.py` digunakan untuk mengambil dan memperbarui berkas JSON statis
+di bawah `public/data`. Untuk menjaga data tetap up‑to‑date, jalankan skrip satu
+kali setiap 24 jam. Ada dua pendekatan:
+
+1. **Loop internal** – biarkan skrip terus berjalan dan tidur di antara pengambilan:
+   ```bash
+   python sedot.py --loop        # interval default 24 jam
+   python sedot.py --loop 12     # interval 12 jam
+   ```
+   Skrip akan mencetak log ke terminal dan menulis timestamp terakhir ke file
+   `last_fetch.txt`.
+
+2. **Penjadwalan eksternal (cron/dll)** – gunakan scheduler sistem untuk memanggil
+   skrip pada waktu yang Anda tentukan. Contoh cron:
+   ```cron
+   0 3 * * * /usr/bin/python3 /path/to/sedot.py >> /var/log/sedot.log 2>&1
+   ```
+   Ganti path dan jam sesuai kebutuhan.
+
+Kedua metode akan menghasilkan file baru di `public/data`, lalu file tersebut
+dapat dideploy kembali ke Cloudflare Pages.
+
+### Otomasi dengan GitHub Actions
+
+Anda juga bisa menyerahkan semua pekerjaan ke GitHub Actions sehingga
+proses pengambil data dan commit berjalan di server GitHub setiap hari
+(jadi Anda tidak perlu meninggalkan mesin sendiri berjalan atau membuka
+Codespace). Berikut langkah umum:
+
+1. Buat file workflow di `.github/workflows/update-data.yml` (contoh file
+   sudah disediakan di repo).
+2. Atur *schedule* (cron) di dalam workflow sesuai kebutuhan. Defaultnya
+   adalah `0 3 * * *` (pukul 03:00 UTC setiap hari).
+3. Pastikan skrip `sedot.py` dan dependensi (`aiohttp`) sudah berada di
+   repo; workflow akan menginstalnya pada runner.
+4. Workflow akan menjalankan `python sedot.py --sync`, mengidentifikasi
+   perubahan di `public/data`, dan otomatis commit/push bila ada file
+   baru atau ter-update.
+5. (Opsional) tambahkan langkah setelah commit untuk menjalankan `wrangler
+   pages deploy ./public` jika Anda ingin deployment Pages dilakukan
+   langsung dari Actions. Gunakan secret `CF_API_TOKEN` untuk autentikasi.
+
+Dengan pendekatan ini, data statis akan diperbarui setiap 24 jam (atau
+interval lain yang ditentukan) dan commit hasilnya ke repository tanpa
+intervensi manual.
+
