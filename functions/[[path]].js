@@ -1,4 +1,4 @@
-// functions/[[path]].js
+ // functions/[[path]].js
 // Cloudflare Pages Functions format dengan CACHE OPTIMIZED dan Schema.org Lengkap
 
 export async function onRequest(context) {
@@ -1062,13 +1062,21 @@ function render(t, b, schema, url, meta = {}) {
                 });
             }
 
-            // Global Image Error Handler
+            // Enhanced Global Image Error Handler
             document.addEventListener('error', (e) => {
-                if (e.target.tagName === 'IMG') {
-                    const fallback = "/images/placeholder.webp";
-                    if (e.target.src !== fallback) {
-                        e.target.style.opacity = '0.8';
-                        e.target.src = fallback;
+                const target = e.target;
+                if (target.tagName === 'IMG') {
+                    const localFallback = "/images/placeholder.webp";
+                    const dataFallback = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231f1f1f'/%3E%3Cpath d='M30 40 L70 40 L50 70 Z' fill='%23333'/%3E%3C/svg%3E";
+                    
+                    if (target.src.includes(localFallback)) {
+                        // If even the local fallback fails, use data URI
+                        target.src = dataFallback;
+                    } else if (!target.src.startsWith('data:')) {
+                        // First fallback: local webp
+                        target.style.opacity = '0.7';
+                        target.src = localFallback;
+                        target.classList.add('img-error');
                     }
                 }
             }, true);
