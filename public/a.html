@@ -1,48 +1,176 @@
-
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menampilkan Data JSON dan Video</title>
     <style>
-        .result-item img {
-            max-width: 100%;
-            height: auto;
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            padding: 20px;
+            color: #e5e5e5;
         }
-        #custom-player {
+
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 280px;
+            margin-right: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            background: #1e1e1e;
+            color: #e5e5e5;
+            border-radius: 6px;
+        }
+
+        input[type="text"]::placeholder {
+            color: #777;
+        }
+
+        button {
+            padding: 10px 16px;
+            background: #1f6feb;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1158c7;
+        }
+
+        #result {
+            background: #1a1a1a;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+            color: #e5e5e5;
             width: 100%;
-            height: 500px;
-            display: none; /* Sembunyikan player sampai dipanggil */
+            min-height: 400px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .result-item p {
+            background: #222;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            color: #e5e5e5;
+            border: 1px solid #333;
+            word-break: break-word;
+        }
+
+        .title-hidden {
+            display: none;
+        }
+
+        #custom-player {
+            margin-top: 20px;
+            border-radius: 8px;
+            background: black;
         }
     </style>
 </head>
+
 <body>
     <h1>Data dari API</h1>
     <input type="text" id="searchTerm" placeholder="Masukkan kata kunci...">
-    <input type="text" id="customDomain" placeholder="Masukkan domain (pisahkan dengan koma)" value="puki.pro,dodk.pro">
+    <input type="text" id="customDomain" placeholder="Masukkan domain (pisahkan dengan koma)" value="doodi.pages.dev">
     <input type="text" id="customRandomTitles" placeholder="Masukkan judul acak (pisahkan dengan koma)">
     <button id="searchButton">Cari</button>
     <button id="listButton">Tampilkan Semua</button>
     <button id="saveButton">Simpan Kata Kunci</button>
-    <div id="result" class="result-item"></div>
+    <button id="toggleTitleButton">Sembunyikan Title</button>
+    <textarea id="result" class="result-item"></textarea>
     <div id="custom-player"></div>
 
     <script>
         const defaultRandomTitles = [
-            "Video Doodstream",
-			   "Video viral",
-			    "vidio viral",
-            "Indo lokal", 
-            "viral Dood",
-            "Terbaru Update", 
-            "terabox",
-            "pophd abg"
+            "malming"
         ];
 
         let currentDomainIndex = 0; // Indeks untuk domain saat ini
+        let titlesVisible = true; // Status visibility title
 
-        document.getElementById('searchButton').addEventListener('click', function() {
+        // Konten tambahan yang akan disisipkan di sela-sela hasil
+        const additionalContent = [
+            { title: 'ome tv vcs suara sound on sporty', link: 'dodll.pages.dev/f/vcs' },
+            { title: 'stw binor hijab doodstream', link: 'dodll.pages.dev/f/stw-binor' },
+            { title: 'prank ojol malming full percakapan MUFC', link: 'dodll.pages.dev/f/prank-ojol' },
+            { title: 'stw tobrut terbaru dood videy', link: 'dodll.pages.dev/f/stw-tobrut' },
+            { title: 'hijab binor viral videy', link: 'dodll.pages.dev/f/hijab-binor' },
+            { title: 'hijab tobrut doods videy', link: 'dodll.pages.dev/f/hijab-tobrut' },
+            { title: 'skandal selingkuh videy doods', link: 'dodll.pages.dev/f/selingkuh' },
+            { title: 'hijab viral', link: 'dodll.pages.dev/f/hijab-viral' },
+            { title: 'videy doods terbaru', link: 'dodll.pages.dev/f/video-indo' },
+            { title: 'Tante Yona terbaru', link: 'dodll.pages.dev/f/tante-yona' },
+            { title: 'STW tobrut videy dood', link: 'dodll.pages.dev/f/stw-tobrut' },
+            { title: 'rank ojol terbaru full percakapan', link: 'dodk.pages.dev/f/prank-ojol' },
+            { title: 'meli3gp dood viral', link: 'dodll.pages.dev/f/meli3gp' },
+            { title: 'Hijab Tobrut', link: 'dodll.pages.dev/f/hijab-tobrut' },
+            { title: 'binor', link: 'dodll.pages.dev/f/binor' },
+            { title: 'stw', link: 'dodll.pages.dev/f/stw' },
+            { title: 'Stw tobrut', link: 'dodll.pages.dev/f/stw-tobrut' },
+            { title: 'hijab tobrut doods videy', link: 'dodll.pages.dev/f/hijab-tobrut' },
+            { title: 'pijat plus full percakapan', link: 'dodll.pages.dev/f/pijat-plus' },
+            { title: 'tante yona terbaru doods dood', link: 'videk.pages.dev/f/tante-yona' },
+            { title: 'hijab tobrut videy indo dood', link: 'dodll.pages.dev/f/hijab' },
+            { title: 'Stw videy dood indo', link: 'videyk.pages.dev/f/stw' },
+            { title: 'Mbah Maryono pijit Stw', link: 'dodll.pages.dev/f/mbah-maryono' },
+            { title: 'stw tobrut terbaru dood videy', link: 'dodll.pages.dev/f/stw-tobrut' },
+            { title: 'hijab binor viral videy', link: 'dodll.pages.dev/f/hijab-binor' },
+            { title: 'Tante Yona terbaru', link: 'dodll.pages.dev/f/tante-yona' },
+            { title: 'STW tobrut videy dood', link: 'dodll.pages.dev/f/stw-tobrut' },
+            { title: 'brother musang', link: 'dodll.pages.dev/f/brother-musang' },
+            { title: 'stw viral doods videy', link: 'dodll.pages.dev/f/stw-viral' },
+            { title: 'prank ojol full percakapan', link: 'dodll.pages.dev/f/prank-ojol' },
+            { title: 'meli3gp dood viral', link: 'dodll.pages.dev/f/meli3gp' },
+            { title: 'Selebgram viral selingkuh', link: 'dodll.pages.dev/f/selebgram' },
+            { title: 'acha viral kacamata', link: 'dodll.pages.dev/f/acha-viral' },
+            { title: 'Baby Putie', link: 'dodll.pages.dev/f/baby-putie' },
+            { title: 'Tante yona', link: 'dodll.pages.dev/f/tante-yona' },
+            { title: 'pijat plus', link: 'dodll.pages.dev/f/pijat-plus' },
+            { title: 'stw', link: 'dodll.pages.dev/f/stw' },
+            { title: 'binor full percakapan', link: 'dodll.pages.dev/f/binor' },
+            { title: 'Zalva Rexona', link: 'dodll.pages.dev/f/zalva' },
+            { title: 'Viral Hilda Pricillya', link: 'dodk.pages.dev/f/hilda' },
+            { title: 'videy indo dood', link: 'videk.pages.dev/f/hijab-cantik' },
+            { title: 'jilbab doodstream', link: 'videk.pages.dev/f/jilbab-viral' },
+            { title: 'tante stw enak banget', link: 'dodll.pages.dev/f/tante-stw' },
+            { title: 'Vidio Mbah Maryono Binor', link: 'dodll.pages.dev/f/mbah-maryono' },
+            { title: 'Mbah Maryono 50 Yang Lagi Viral', link: 'dodll.pages.dev/f/mbah-maryono' },
+            { title: 'Mbah Maryono Colok Mmk Stw', link: 'dodll.pages.dev/e/yihtgk16z1gn' },
+            { title: 'Pijat Mbah Maryono Sama Tante', link: 'dodll.pages.dev/e/tok37i6x7t3l' },
+            { title: 'Daisy Bae Jilbab Pink', link: 'dodll.pages.dev/f/daisy-bae' },
+            { title: 'enaknya di muka tante stw', link: 'dodll.pages.dev/f/pejuhin-tante' },
+            { title: 'tante stw', link: 'dodll.pages.dev/f/tante-stw' },
+            { title: 'tante stw ngwe ujan', link: 'dodll.pages.dev/f/ngewe-tante' },
+            { title: 'bo tante stw s3mok', link: 'dodll.pages.dev/f/tante-semok' },
+            { title: 'stw 6', link: 'dodll.pages.dev/f/stw' },
+            { title: 'pijat tante cangcut ungu', link: 'dodll.pages.dev/f/pijat-tante' },
+            { title: 'tante pijat crt didalam', link: 'dodll.pages.dev/f/tante' },
+            { title: 'tante kina', link: 'dodll.pages.dev/f/tante-kina' },
+        ];
+
+        function getRandomAdditionalContent() {
+            const randomIndex = Math.floor(Math.random() * additionalContent.length);
+            return additionalContent[randomIndex];
+        }
+
+        document.getElementById('searchButton').addEventListener('click', function () {
             const searchTerm = document.getElementById('searchTerm').value;
             const url = `https://scrapy-01q.pages.dev/api/search?q=${encodeURIComponent(searchTerm)}`;
 
@@ -54,17 +182,21 @@
                     return response.json();
                 })
                 .then(data => {
-                    displayResults(data.result);
+                    const searchTerm = document.getElementById('searchTerm').value;
+                    const sortedResults = sortResultsByRelevance(data.result, searchTerm);
+                    displayResults(sortedResults, searchTerm);
                 })
                 .catch(error => {
                     console.error('There was a problem with the fetch operation:', error);
-                    document.getElementById('result').innerHTML = 'Terjadi kesalahan saat mengambil data.';
+                    document.getElementById('result').value = 'Terjadi kesalahan saat mengambil data.';
                 });
         });
 
-        document.getElementById('listButton').addEventListener('click', function() {
-            const url = 'https://scrapy-01q.pages.dev/api/list';
-            
+        document.getElementById('listButton').addEventListener('click', function () {
+            // Generate random page number antara 1-539
+            const randomPage = Math.floor(Math.random() * 539) + 1;
+            const url = `https://full-apis.pages.dev/api/list?page=${randomPage}`;
+
             fetch(url)
                 .then(response => {
                     if (!response.ok) {
@@ -74,18 +206,19 @@
                 })
                 .then(data => {
                     if (data.result && data.result.files) {
-                        displayResults(data.result.files);
+                        const searchTerm = ''; // Untuk list semua, tidak ada kata kunci
+                        displayResults(data.result.files, searchTerm);
                     } else {
-                        document.getElementById('result').innerHTML = 'Tidak ada hasil ditemukan.';
+                        document.getElementById('result').value = 'Tidak ada hasil ditemukan.';
                     }
                 })
                 .catch(error => {
                     console.error('There was a problem with the fetch operation:', error);
-                    document.getElementById('result').innerHTML = 'Terjadi kesalahan saat mengambil data.';
+                    document.getElementById('result').value = 'Terjadi kesalahan saat mengambil data.';
                 });
         });
 
-        document.getElementById('saveButton').addEventListener('click', function() {
+        document.getElementById('saveButton').addEventListener('click', function () {
             const searchTerm = document.getElementById('searchTerm').value;
             const blob = new Blob([searchTerm], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -98,8 +231,24 @@
             URL.revokeObjectURL(url); // Bebaskan URL setelah digunakan
         });
 
+        document.getElementById('toggleTitleButton').addEventListener('click', function () {
+            titlesVisible = !titlesVisible;
+            const titleElements = document.querySelectorAll('.result-title');
+            const button = document.getElementById('toggleTitleButton');
+
+            titleElements.forEach(element => {
+                if (titlesVisible) {
+                    element.classList.remove('title-hidden');
+                } else {
+                    element.classList.add('title-hidden');
+                }
+            });
+
+            button.textContent = titlesVisible ? 'Sembunyikan Title' : 'Tampilkan Title';
+        });
+
         function cleanTitle(title) {
-            const forbiddenWords = ['bokep', 'memek','Update', 'ngentot', 'ngewe', 'colmek', 'pepek', 'perkosa'];
+            const forbiddenWords = ['bokep', 'memek', 'Update', 'ngentot', 'ngewe', 'colmek', 'pepek', 'muncrat', 'kontol', 'jilmek', 'perkosa'];
             let cleanedTitle = title;
 
             forbiddenWords.forEach(word => {
@@ -108,7 +257,7 @@
             });
 
             const words = cleanedTitle.trim().split(/\s+/);
-            const maxWords = 5;
+            const maxWords = 3;
             let result = [];
 
             for (let i = 0; i < words.length; i++) {
@@ -137,38 +286,108 @@
         function getNextDomain() {
             const customDomainInput = document.getElementById('customDomain').value;
             const domains = customDomainInput.split(',').map(domain => domain.trim()).filter(domain => domain);
-            if (domains.length === 0) return 'puki.pro'; // Default domain jika tidak ada input
+            if (domains.length === 0) return 'doodi.pages.dev'; // Default domain jika tidak ada input
             const domain = domains[currentDomainIndex];
             currentDomainIndex = (currentDomainIndex + 1) % domains.length; // Update indeks untuk domain berikutnya
             return domain;
         }
 
-        function displayResults(results) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '';
+        function calculateRelevanceScore(result, searchTerm) {
+            if (!searchTerm || !result.title) return 0;
+
+            const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+            const title = result.title.toLowerCase();
+            let score = 0;
+
+            // Hitung skor berdasarkan kemunculan kata kunci
+            searchWords.forEach(word => {
+                // Exact match di awal judul (skor tertinggi)
+                if (title.startsWith(word)) {
+                    score += 100;
+                }
+                // Exact match di tengah judul
+                else if (title.includes(' ' + word + ' ')) {
+                    score += 50;
+                }
+                // Partial match (kata kunci muncul sebagai substring)
+                else if (title.includes(word)) {
+                    score += 25;
+                }
+
+                // Bonus jika semua kata kunci ada
+                const wordCount = searchWords.filter(w => title.includes(w)).length;
+                if (wordCount === searchWords.length) {
+                    score += 30;
+                }
+            });
+
+            // Bonus untuk judul yang lebih pendek (lebih relevan)
+            if (title.length < 50) {
+                score += 10;
+            }
+
+            return score;
+        }
+
+        function sortResultsByRelevance(results, searchTerm) {
+            if (!searchTerm || !results || results.length === 0) return results;
+
+            // Buat salinan array dan tambahkan skor relevansi
+            const resultsWithScore = results.map(result => ({
+                ...result,
+                relevanceScore: calculateRelevanceScore(result, searchTerm)
+            }));
+
+            // Urutkan berdasarkan skor (tertinggi ke terendah)
+            return resultsWithScore.sort((a, b) => b.relevanceScore - a.relevanceScore);
+        }
+
+        function formatLink(link) {
+            // Pastikan link memiliki http:// atau https://
+            if (!link.startsWith('http://') && !link.startsWith('https://')) {
+                return `https://${link}`;
+            }
+            return link;
+        }
+
+        function displayResults(results, searchTerm = '') {
+            const resultTextarea = document.getElementById('result');
+            let output = '';
 
             if (results && results.length > 0) {
-                const allResultsDiv = document.createElement('div');
-                allResultsDiv.className = 'result-item';
-
-                results.forEach(result => {
+                results.forEach((result, index) => {
                     const cleanedTitle = cleanTitle(result.title);
                     const randomTitle = getRandomTitle();
-                    const link = `${getNextDomain()}/e/${result.file_code}`; // Menggunakan domain yang diperoleh
+                    const link = formatLink(`${getNextDomain()}/e/${result.file_code}`); // Menggunakan domain yang diperoleh
 
-                    const resultItem = document.createElement('div');
-                    resultItem.innerHTML = `
-                        <p>${cleanedTitle}  ${randomTitle}<br>
-                         ${link}</p>
-                    `;
-                    allResultsDiv.appendChild(resultItem);
+                    if (titlesVisible) {
+                        output += `${cleanedTitle}  ${randomTitle}\n${link}\n\n`;
+                    } else {
+                        output += `${link}\n\n`;
+                    }
+
+                    // Sisipkan konten tambahan setelah setiap 1 result
+                    const additional = getRandomAdditionalContent();
+                    const additionalLink = formatLink(additional.link);
+                    output += `${additional.title}\n${additionalLink}\n\n`;
                 });
-
-                resultDiv.appendChild(allResultsDiv);
             } else {
-                resultDiv.innerHTML = 'Tidak ada hasil ditemukan.';
+                output = 'Tidak ada hasil ditemukan.';
             }
+
+            resultTextarea.value = output;
         }
+
+        // ====== TAMBAHAN: tekan Enter di input akan jalankan pencarian ======
+        const searchInput = document.getElementById('searchTerm');
+        searchInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // cegah submit form default kalau nanti pakai form
+                document.getElementById('searchButton').click();
+            }
+        });
+        // ===================================================================
     </script>
 </body>
+
 </html>
