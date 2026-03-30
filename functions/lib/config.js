@@ -14,6 +14,9 @@ export const CONFIG = {
 
 // Template deskripsi — gunakan {title}, {name}, {page}, {query}, {total}
 export const DESCRIPTIONS = {
+    // Welcome page
+    welcomeMeta: `Selamat datang di {name}. Platform streaming video viral terbaru dan terlengkap dengan koleksi video berkualitas tinggi.`,
+    welcomeDescription: `Temukan ribuan video viral terbaru dari berbagai kategori favorit. Streaming gratis tanpa iklan dengan kualitas HD terbaik.`,
     // Detail page
     detailMeta: `Nonton video {title} terbaru. Streaming video viral dan terbaru hanya di {name}.`,
     detailBody: `Streaming video viral terbaru {title}. Video ini menyajikan konten menarik yang wajib Anda saksikan hingga akhir.`,
@@ -33,6 +36,8 @@ export const DESCRIPTIONS = {
 
 // Template judul — gunakan {title}, {name}, {page}, {query}, {total}
 export const TITLES = {
+    // Welcome page
+    welcomePage: `Selamat Datang di {name}`,
     // Search page
     searchPage: `Kumpulan {total} Video {query}`,
     searchH1: `{total} Video Kumpulan {query} yang sedang Viral di {name}`,

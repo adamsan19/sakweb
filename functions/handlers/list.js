@@ -51,7 +51,7 @@ export async function list(url, env, pageParam) {
 
   const metaData = {
     description: desc(DESCRIPTIONS.listMeta, { name: CONFIG.name, page }),
-    canonical: page === 1 ? url.origin : `${url.origin}/page/${page}`,
+    canonical: page === 1 ? `${url.origin}/list/` : `${url.origin}/list/${page}`,
     robots: page === 1 ? "index, follow" : "noindex, follow",
     type: "website",
   };
@@ -155,7 +155,7 @@ function buildListBody(files, page, meta, origin) {
             ${files.map((v, index) => VideoCard(v, origin, index)).join("")}
         </div>
         
-        ${Pagination(page, meta.total, 200, "/page/", "")}
+        ${Pagination(page, meta.total, 200, "/list/", "")}
     </section>
     `;
 }

@@ -94,7 +94,7 @@ export async function withCache(req, fn) {
     const isStatic = url.pathname.match(/\.(css|js|jpg|jpeg|png|ico|svg|woff2?|webp|mp4|gif)$/i);
     const isVideoPage = url.pathname.startsWith('/e/');
     const isSearchPage = url.pathname.startsWith('/f/');
-    const isListingPage = url.pathname.startsWith('/page/') || url.pathname === '/';
+    const isListingPage = url.pathname.startsWith('/page/') || url.pathname.startsWith('/list/') || url.pathname === '/';
     const isApi = url.pathname.startsWith('/api/');
 
     if (isStatic) {
