@@ -1,4 +1,4 @@
-# sedot.py
+ # sedot.py
 import asyncio
 import json
 import os
@@ -25,14 +25,14 @@ except ImportError:
 # CONSTANTS AND CONFIGURATION
 # ============================================================================
 
-DATA_PER_PAGE = 200
-MAX_INDEXED_VIDEOS = 10000  # Maksimal video untuk search index
+DATA_PER_PAGE = 30
+MAX_INDEXED_VIDEOS = 50000  # Maksimal video untuk search index
 SEARCH_PREFIX_LEN = 2
 PREFIX2_LIMIT = 500
 
 CONFIGS = {
     'doodstream': {
-        'api_url': 'https://doodapi.com/api/file/list',
+        'api_url': 'https://doodapi.co/api/file/list',
         'api_key': '112623ifbcbltzajwjrpjx',
         'per_page': 200,
         'request_delay': 0.5,
@@ -85,8 +85,51 @@ BLOCKED_TITLE_PATTERNS = [
     ]
 ]
 
+SKIP_WORDS = set([
+    'di', 'ke', 'dari', 'pada', 'yang', 'untuk', 'dan', 'atau', 'tapi', 'tetapi',
+    'dengan', 'oleh', 'karena', 'sehingga', 'agar', 'supaya', 'jika', 'kalau',
+    'apabila', 'walau', 'meski', 'walaupun', 'meskipun', 'sementara',
+    'sedang', 'ketika', 'saat', 'setelah', 'sebelum', 'hingga', 'sampai',
+    'demi', 'lewat', 'melalui', 'via', 'tanpa', 'sejak', 'selama', 'ketika',
+    'sambil', 'seraya', 'biar', 'meski', 'meskipun', 'agar', 'supaya',
+    'atas', 'bawah', 'depan', 'belakang', 'samping', 'dalam', 'luar',
+    'antara', 'sekitar', 'sebelah', 'hadap', 'tepi', 'pinggir', 'ujung',
+    'kah', 'lah', 'tah', 'pun', 'nya',
+    'se', 'ber', 'ter', 'me', 'pe', 'per', 'mem', 'pen', 'peng', 'men',
+    'pem', 'pel', 'ber', 'ter', 'ke', 'di', 'per', 'se', 'meng', 'meny',
+    'memper', 'mempert', 'diper', 'terper',
+    'kan', 'an', 'i', 'nya', 'ku', 'mu',
+    'ini', 'itu', 'sini', 'situ', 'sana', 'kamu', 'aku', 'saya', 'kita',
+    'mereka', 'dia', 'beliau', 'anda', 'kalian', 'kami', 'engkau', 'kau',
+    'beliau', 'nya',
+    'sebuah', 'suatu', 'sang', 'si', 'para', 'kaum', 'segala', 'seluruh',
+    'semua', 'setiap', 'masing', 'beberapa', 'sedikit', 'banyak', 'semua',
+    'adalah', 'ialah', 'merupakan', 'menjadi', 'bisa', 'dapat', 'mampu',
+    'harus', 'wajib', 'perlu', 'hendak', 'akan', 'sedang', 'telah', 'sudah',
+    'pernah', 'belum', 'masih', 'baru', 'hanya', 'cuma', 'sekadar', 'hampir',
+    'nyaris', 'agak', 'cukup', 'terlalu', 'amat', 'sangat', 'benar', 'sungguh',
+    'ada', 'tidak', 'bukan', 'jangan', 'janganlah', 'usah', 'jangan',
+    'mohon', 'tolong', 'harap', 'silahkan', 'mari', 'ayo', 'ayolah',
+    'wah', 'aduh', 'astaga', 'ya', 'tidak', 'bukan',
+    'dalam', 'oleh', 'pada', 'sebagai', 'bagi', 'menurut', 'tentang',
+    'mengenai', 'atas', 'bawah', 'depan', 'belakang', 'samping', 'antara',
+    'di', 'ke', 'dari', 'demi', 'hingga', 'sampai', 'selama', 'sementara',
+    'seraya', 'ketika', 'sewaktu', 'sebelum', 'sesudah', 'setelah', 'sejak',
+    'tatkala', 'selagi', 'sedangkan', 'sambil', 'seraya', 'biar', 'meski',
+    'walau', 'walaupun', 'meskipun', 'supaya', 'agar', 'untuk', 'guna',
+    'dengan', 'tanpa', 'via', 'lewat', 'melalui', 'oleh', 'sebab', 'karena',
+    'lantas', 'lalu', 'kemudian', 'maka', 'oleh_karena', 'sehingga',
+    'maka_dari', 'adapun', 'akan', 'bahwa', 'bahwasanya', 'sebab', 'jika',
+    'kalau', 'apabila', 'andai', 'andaikata', 'seandainya', 'seumpama',
+    'seakan', 'seolah', 'ibarat', 'sebagaimana', 'seperti', 'bagai',
+    'laksana', 'daripada', 'alih', 'daripada',
+    'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan',
+    'sembilan', 'sepuluh', 'seratus', 'seribu', 'sejuta', 'pertama',
+    'kedua', 'ketiga', 'keempat', 'kelima',
+])
+
 # ============================================================================
-# DATA NORMALIZER CLASS
+# DATA NORMALIZER CLASS - FIXED VERSION
 # ============================================================================
 
 class DataNormalizer:
@@ -101,57 +144,78 @@ class DataNormalizer:
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
         return cleaned
 
+    def _clean_text(self, text: str) -> str:
+        """
+        Helper method to apply consistent cleaning to any text.
+        This ensures all text goes through the same normalization process.
+        """
+        if not text:
+            return ''
+        
+        # Add space before capital letters following lowercase
+        cleaned = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
+        
+        # Replace special characters within words with spaces
+        cleaned = re.sub(r'([a-zA-Z])[^a-zA-Z\s]+([a-zA-Z])', r'\1 \2', cleaned)
+        
+        # Remove remaining special characters
+        cleaned = re.sub(r'[^a-zA-Z\s]', '', cleaned)
+        
+        # Replace multiple spaces and trim
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        
+        return cleaned
+
     def clean_and_format_title(self, title: str) -> str:
+        """
+        Clean and format title with consistent processing.
+        FIXED: Now all text (including added words) goes through the same cleaning pipeline.
+        """
         if not title:
             return ''
         
         # Strip blocked words first
         title = self.strip_blocked_words(title)
         
-        # Add space before capital letters following lowercase
-        clean_title = re.sub(r'([a-z])([A-Z])', r'\1 \2', title)
-        
-        # Replace special characters within words with spaces
-        clean_title = re.sub(r'([a-zA-Z])[^a-zA-Z\s]+([a-zA-Z])', r'\1 \2', clean_title)
-        
-        # Remove remaining special characters
-        clean_title = re.sub(r'[^a-zA-Z\s]', '', clean_title)
-        
-        # Replace multiple spaces and trim
-        clean_title = re.sub(r'\s+', ' ', clean_title).strip()
+        # Apply consistent text cleaning
+        clean_title = self._clean_text(title)
         
         # Convert to proper case
         clean_title = clean_title.title()
         
         words = clean_title.split()
-        if len(words) < 12:
-            additional_words = self.get_random_words(5)
-            clean_title += ' ' + ' '.join(additional_words)
         
+        # Add random words if needed (NOW with proper cleaning)
+        if len(words) < 12:
+            additional_words_raw = self.get_random_words(3)
+            # Join the additional words
+            additional_text = ' '.join(additional_words_raw)
+            # Apply the SAME cleaning process to additional text
+            additional_text = self._clean_text(additional_text)
+            # Convert to proper case for consistency
+            additional_text = additional_text.title()
+            # Add to the title
+            clean_title += ' ' + additional_text
+        
+        # Now process the combined text
         words = clean_title.split()
         unique_words = list(dict.fromkeys(words))  # Preserve order
-        limited_words = unique_words[:12]
         
-        return ' '.join(limited_words)
+        return ' '.join(unique_words)
     
     def get_random_words(self, count: int) -> List[str]:
+        """Get random words from the list (raw, will be cleaned later)"""
         words = [
-            'Sotwe', 'Bokep Dood', 'Twitter', 'Bokepsatset', 'Simontok', 'Video Viral',
-            'Video Viral', 'Bokep Video', 'Simintok', 'Xpanas', 'Full Album', 'Doodstream',
-            'Bokepsin', 'Simontok', 'Bokep', 'Asupan', 'Bokepsin', 'Bebasindo',
-            'Pekoblive', 'Terabox', 'Streaming', 'Viral', 'Indo', 'Tiktok', 'Telegram',
-            'Doods Pro', 'Telegram', 'Ful Album', 'Viral', 'Videos',
-            'Poophd', 'Bochiel', 'Link Web', 'Folder',
-            'Cilbo', 'Live', 'Tele', 'Terupdate', 'Links', 'Lokal', 'Dodstream',
-            'Pemersatu', 'Update', 'Dood', 'Doostream', 'Website',
-            'Downloader', 'Lulustream', 'Doodsflix', 'Yakwad', 'Doodflix',
-            'Tobrut', 'Lagi Viral', 'Doodstreem', 'Jilbab',
-            'Asupan Viral',
-            'Pejuang Lendir', 'Popstream', 'Staklam', 'Bokepind', 'Video Bokep',
-            'Bokep31', 'Video Indo', 'Video Colmek', 'Toketbagus',  
-            'Video Sma', 'Doods Pro', 'Ngentot',  
-            'Indonesia', 'Bokepin', 'Dood Tele', 'Cantik Tobrut', 'Memeksiana'
-        ]
+            'Video Sotwe', 'Video Wiki', 'Lagi Viral', 'Bokep Dood', 'Twitter', 'Bokepsatset', 
+            'Simontok', 'Video Viral', 'Bokep Video', 'Video Yandex', 'Xpanas', 'Full Album', 
+            'Doodstream', 'Bokepsin', 'Link Asupan', 'Bebasindo', 'Pekoblive', 'Terabox', 
+            'Streaming', 'Videy Link Telegram', 'Tiktok', 'Telegram', 'Asupan Viral', 'Videos', 'Poophd', 
+            'Video Yandex', 'Full Album', 'Bokepindo', 'Terupdate', 'Links Tele', 
+            'Skandal Mesum', 'Dodstream', 'Link Pemersatu', 'Update', 'Dood Viral', 'Lulustream', 'Website', 
+            'Doodsflix', 'Yakwad', 'Doodflix', 'Doodstreem', 'Asupan Viral', 
+            'Pejuang Lendir', 'Popstream', 'Staklam', 'Bokepind', 'Video Bokep', 
+            'Bokep31', 'Video Indo', 'Toketbagus', 'Doods Pro', 'Bokepin', 'DoodTele', 'Memeksiana'
+           ]
         random.shuffle(words)
         return words[:count]
     
@@ -212,7 +276,13 @@ class DataNormalizer:
         else:
             return f"PT{remaining_seconds}S"
     
-
+    def proxy_img(self, url: str) -> str:
+        """Return image URL without proxy"""
+        if not url:
+            return ""
+        if url.startswith('data:'):
+            return url
+        return url
     
     def format_number(self, num) -> str:
         """Format number (views) to K/M format"""
@@ -252,6 +322,13 @@ class DataNormalizer:
         """Generate URL-friendly slug"""
         if not text:
             return "video"
+            
+        # Apply skip words filtering
+        words = text.split()
+        filtered = [w for w in words if w.lower() not in SKIP_WORDS]
+        if filtered:
+            text = ' '.join(filtered)
+            
         # Mirror of JS norm() function but for slugs
         norm = text.lower()
         norm = re.sub(r'[^a-z0-9\s]', ' ', norm)
@@ -307,152 +384,50 @@ class DataNormalizer:
         """Generate category name from title"""
         # Kata-kata prioritas
         priority_words = [
-        # Kategori umum viral
-        'hijab', 'viral', 'trending', 'populer', 'terbaru', 'terkini', 'hot',
-        
-        # Lokasi/region
-        'indo', 'indonesia', 'lokal', 'jepang', 'jepang', 'jav', 'japan', 
-        'korea', 'korean', 'china', 'chinese', 'thai', 'thailand', 'vietnam',
-        'filipina', 'malaysia', 'singapore', 'asia', 'barat', 'timur',
-        
-        # Platform hosting
-        'doodstream', 'terabox', 'lulustream', 'streaming', 'dood', 'terabox',
-        'google', 'drive', 'gdrive', 'mega', 'dropbox', 'mediafire',
-        'zippyshare', 'racaty', 'solidfiles', 'upload', 'uploaded',
-        
-        # Demografi/karakter
-        'Abg', 'Sma', 'Remaja', 'Janda', 'Stw', 'Ibu', 'Bapak', 'Kakek', 'Nenek',
-        'Mahasiswa', 'Pelajar', 'Siswi', 'Siswa', 'Guru', 'Murid', 'Dosen',
-        'Pegawai', 'Karyawan', 'Artis', 'Selebriti', 'Selebgram', 'Tiktoker',
-        'Youtuber', 'Streamer', 'Model', 'Bintang', 'Pemain',
-        
-        # Kategori konten
-        'Skandal', 'Bokep', 'Colmek', 'Pijat', 'Pijat Plus', 'Pijat Panggilan',
-        'Spa', 'Hotel', 'Motel', 'Penginapan', 'Kosan', 'Kontrakan',
-        'Rumah', 'Kamar', 'Tidur', 'Mandi', 'Kamar Mandi', 'Toilet',
-        'Prank', 'Kloset', 'Terima', 'Kasih', 'Berkah',
-        
-        # Genre/fetish
-        'Ngentot', 'ML', 'Senggama', 'Bercinta', 'Mesum', 'Asusila',
-        'Telanjang', 'Bugil', 'Togel', 'Toge', 'Polisi', 'Tentara',
-        'Satpam', 'Security', 'Sopir', 'Driver', 'Ojek', 'Grab', 'Gojek',
-        'Taksi', 'Taxi', 'Angkot', 'Bus', 'Kereta', 'Pesawat',
-        
-        # Event/spesial
-        'Lebaran', 'Natal', 'Tahun Baru', 'Valentine', 'Halloween',
-        'Liburan', 'Weekend', 'Sabtu', 'Minggu', 'Malam', 'Siang', 'Pagi',
-        'Sore', 'Petang', 'Senja', 'Dini', 'Hari',
-        
-        # Teknis/kualitas
-        'Hd', 'Fhd', '4k', '1080p', '720p', '480p', '360p', 'High Quality',
-        'Hq', 'Clear', 'Jernih', 'Bening', 'Full', 'Lengkap', 'Complete',
-        'Part', 'Episode', 'Eps', 'Season', 'Series', 'Serial',
-        
-        # Media sosial
-        'Tiktok', 'Instagram', 'Ig', 'Facebook', 'Fb', 'Twitter', 'Twt',
-        'Whatsapp', 'Wa', 'Telegram', 'Tg', 'Line', 'Snapchat', 'Sc',
-        'Vcs', 'Videocall', 'Live', 'Streaming', 'Siaran', 'Broadcast',
-        
-        # Nama spesifik (tokoh/artis viral)
-        'Tobrut', 'Ariel', 'Luna', 'Maya', 'Bayu', 'Siska', 'Rina', 'Dewi',
-        'Sari', 'Mawar', 'Melati', 'Anggun', 'Cantik', 'Manis', 'Imut',
-        'Gadis', 'Perawan', 'Wanita', 'Pria', 'Laki', 'Cowok', 'Cewek',
-        
-        # Status hubungan
-        'Pacar', 'Kekasih', 'Suami', 'Istri', 'Mertua', 'Besan', 'Saudara',
-        'Saudari', 'Kakak', 'Adik', 'Keluarga', 'Kerabat', 'Teman', 'Sahabat',
-        'Tetangga', 'Kolega', 'Rekan', 'Partner',
-        
-        # Profesi
-        'Dokter', 'Perawat', 'Bidan', 'Suster', 'Perawat', 'Polwan',
-        'Tentara', 'Prajurit', 'Satpam', 'Security', 'Sopir', 'Driver',
-        'Guru', 'Murid', 'Dosen', 'Mahasiswa', 'Pegawai', 'Karyawan',
-        'Bos', 'Manager', 'Direktur', 'CEO', 'Owner', 
-        
-        # Konten eksklusif
-        'Premium', 'Vip', 'Exclusive', 'Eksklusif', 'Private', 'Pribadi',
-        'Rahasia', 'Secret', 'Hidden', 'Tersembunyi', 'Leak', 'Bocor',
-        'Hack', 'Retas', 'Phishing', 'Scam', 'Penipuan',
-      
-        
- 
-  ]
-    
+            # Kategori umum viral
+            'hijab', 'Prank Ojol', 'simontok', 'terabox', 'lulustream', 'doodstream', 'prank ojol', 
+            'chindo', 'adik kakak', 'tante yona', 'stw', 'trending', 'cewek colmek', 'remaja', 'pijat plus', 
+            'mbah maryono', 'jav', 'jilbab', 'tobrut', 'skandal', 'tante yona', 'lokal', 'terbaru', 
+            'hot', 'vcs', 'onlyfans', 'telegram', 'jepang', 'china', 'indonesia', 'malaysia', 
+           'vietnam', 'barat', 'binor', 'bokep viral',
+            'bokep pelajar',
+            'video ngentot',
+            'bokep perawan',
+            'jilbab mesum',
+            'prank ojol',
+            'pijat plus',
+            'sepong kontol',
+            'hijab tobrut',
+            'tante sange',
+            'abg viral',
+            'skandal mesum',
+           
+            'syakirah',
+            'doggy style',
+            'tante bohay',
+            'cewek semok',
+            'msbreewc',
+            'cewek tobrut',
+            'janda sange',
+            'bokep jepang',
+            'bokepsatset',
+            'bebasindo',
+            'doodstream',
+            'doods pro',
+            'dood tele',
+            'cantik Tobrut',
+            'memeksiana',
+            'tante sange',
+            'susu gede',
+            'adik kakak',
+            'simontok',
+            'bokep indo',
+            'bokep stw',
+            'video lokal',
+              ]
         
         # Kata-kata yang harus dilewati (awalan, akhiran, imbuhan, kata sambung)
-        skip_words = [
-        # Kata sambung/konjungsi
-        'di', 'ke', 'dari', 'pada', 'yang', 'untuk', 'dan', 'atau', 'tapi', 'tetapi',
-        'dengan', 'oleh', 'karena', 'sehingga', 'agar', 'supaya', 'jika', 'kalau',
-        'apabila', 'walau', 'meski', 'walaupun', 'meskipun', 'sementara',
-        'sedang', 'ketika', 'saat', 'setelah', 'sebelum', 'hingga', 'sampai',
-        'demi', 'lewat', 'melalui', 'via', 'tanpa', 'sejak', 'selama', 'ketika',
-        'sambil', 'seraya', 'biar', 'meski', 'meskipun', 'agar', 'supaya',
-        
-        # Preposisi
-        'atas', 'bawah', 'depan', 'belakang', 'samping', 'dalam', 'luar',
-        'antara', 'sekitar', 'sebelah', 'hadap', 'tepi', 'pinggir', 'ujung',
-        
-        # Partikel
-        'kah', 'lah', 'tah', 'pun', 'nya',
-        
-        # Awalan/imbuhan
-        'se', 'ber', 'ter', 'me', 'pe', 'per', 'mem', 'pen', 'peng', 'men',
-        'pem', 'pel', 'ber', 'ter', 'ke', 'di', 'per', 'se', 'meng', 'meny',
-        'memper', 'mempert', 'diper', 'terper',
-        
-        # Akhiran
-        'kan', 'an', 'i', 'nya', 'ku', 'mu',
-        
-        # Kata ganti
-        'ini', 'itu', 'sini', 'situ', 'sana', 'kamu', 'aku', 'saya', 'kita',
-        'mereka', 'dia', 'beliau', 'anda', 'kalian', 'kami', 'engkau', 'kau',
-        'beliau', 'nya',
-        
-        # Kata sifat umum/pembuka
-        'sebuah', 'suatu', 'sang', 'si', 'para', 'kaum', 'segala', 'seluruh',
-        'semua', 'setiap', 'masing', 'beberapa', 'sedikit', 'banyak', 'semua',
-        
-        # Kata bantu/kerja bantu
-        'adalah', 'ialah', 'merupakan', 'menjadi', 'bisa', 'dapat', 'mampu',
-        'harus', 'wajib', 'perlu', 'hendak', 'akan', 'sedang', 'telah', 'sudah',
-        'pernah', 'belum', 'masih', 'baru', 'hanya', 'cuma', 'sekadar', 'hampir',
-        'nyaris', 'agak', 'cukup', 'terlalu', 'amat', 'sangat', 'benar', 'sungguh',
-        
-        # Kata lain yang umum
-        'ada', 'tidak', 'bukan', 'jangan', 'janganlah', 'usah', 'jangan',
-        'mohon', 'tolong', 'harap', 'silahkan', 'mari', 'ayo', 'ayolah',
-        'wah', 'aduh', 'astaga', 'ya', 'tidak', 'bukan',
-        
-        # Kata umum dalam judul video
-        'full', 'part', 'episode', 'eps', 'scene', 'clip', 'short', 'video',
-        'film', 'movie', 'tv', 'series', 'season', 'trailer', 'preview',
-        'official', 'original', 'version', 'edit', 'hd', 'fhd', '4k', '1080p',
-        '720p', '480p', '360p', '240p', 'mp4', 'mkv', 'avi', 'download',
-        'stream', 'online', 'free', 'premium', 'vip', 'baru', 'lama', 'baru',
-        'hot', 'trending', 'populer', 'terpopuler', 'terbaru', 'terlama',
-        
-        # Kata umum bahasa Indonesia
-        'dalam', 'oleh', 'pada', 'sebagai', 'bagi', 'menurut', 'tentang',
-        'mengenai', 'atas', 'bawah', 'depan', 'belakang', 'samping', 'antara',
-        'di', 'ke', 'dari', 'demi', 'hingga', 'sampai', 'selama', 'sementara',
-        'seraya', 'ketika', 'sewaktu', 'sebelum', 'sesudah', 'setelah', 'sejak',
-        'tatkala', 'selagi', 'sedangkan', 'sambil', 'seraya', 'biar', 'meski',
-        'walau', 'walaupun', 'meskipun', 'supaya', 'agar', 'untuk', 'guna',
-        'dengan', 'tanpa', 'via', 'lewat', 'melalui', 'oleh', 'sebab', 'karena',
-        'lantas', 'lalu', 'kemudian', 'maka', 'oleh_karena', 'sehingga',
-        'maka_dari', 'adapun', 'akan', 'bahwa', 'bahwasanya', 'sebab', 'jika',
-        'kalau', 'apabila', 'andai', 'andaikata', 'seandainya', 'seumpama',
-        
-        # Kata sambung subordinatif
-        'seakan', 'seolah', 'ibarat', 'sebagaimana', 'seperti', 'bagai',
-        'laksana', 'daripada', 'alih', 'daripada',
-        
-        # Kata bilangan
-        'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan',
-        'sembilan', 'sepuluh', 'seratus', 'seribu', 'sejuta', 'pertama',
-        'kedua', 'ketiga', 'keempat', 'kelima',
-    ]
+        skip_words = SKIP_WORDS
         # Pisahkan kata-kata dalam title
         words = title.split()
         
@@ -512,8 +487,6 @@ class DataNormalizer:
         
         return category_name
     
-
-    
     def normalize_data(self, api_data: Dict, api_source: str = 'doodstream', existing_videos: List[Dict] = None) -> List[Dict]:
         if existing_videos is None:
             existing_videos = []
@@ -560,16 +533,17 @@ class DataNormalizer:
                     'protected_dl': item.get('download_url', f'https://doodstream.com/d/{filecode}'),
                     'views': item.get('views', 0),
                     'vw_fmt': self.format_number(item.get('views', 0)),
-                    'single_img': item.get('single_img') or item.get('splash_img', ''),
+                    'single_img': self.proxy_img(item.get('single_img') or item.get('splash_img', '')),
                     'title': clean_title,
                     't_esc': self.html_escape(clean_title),
+                    'seo_url': self.generate_slug(clean_title),
                     'raw_title': raw_title,
                     'status': item.get('status', '200'),
                     'uploaded': item.get('uploaded', ''),
                     'up_fmt': self.format_date(item.get('uploaded', ''), 'full'),
                     'up_short': self.format_date(item.get('uploaded', ''), 'short'),
                     'last_view': item.get('uploaded', ''),
-                    'splash_img': item.get('splash_img') or item.get('single_img', ''),
+                    'splash_img': self.proxy_img(item.get('splash_img') or item.get('single_img', '')),
                     'filecode': filecode,
                     'file_code': filecode,
                     'canplay': item.get('canplay', True),
@@ -601,10 +575,11 @@ class DataNormalizer:
                     'protected_dl': item.get('download_url', f'https://lulustream.com/d/{filecode}'),
                     'views': item.get('views', item.get('file_views', 0)),
                     'vw_fmt': self.format_number(item.get('views', item.get('file_views', 0))),
-                    'single_img': item.get('player_img', f'https://img.lulucdn.com/{filecode}_t.jpg'),
-                    'splash_img': item.get('player_img', f'https://img.lulucdn.com/{filecode}_xt.jpg'),
+                    'single_img': self.proxy_img(item.get('player_img', f'https://img.lulucdn.com/{filecode}_t.jpg')),
+                    'splash_img': self.proxy_img(item.get('player_img', f'https://img.lulucdn.com/{filecode}_xt.jpg')),
                     'title': clean_title,
                     't_esc': self.html_escape(clean_title),
+                    'seo_url': self.generate_slug(clean_title),
                     'raw_title': raw_title,
                     'status': item.get('status', '200'),
                     'uploaded': item.get('uploaded', ''),
@@ -633,9 +608,14 @@ class DataNormalizer:
         return duration * bitrate * 1024 * 1024
     
     def update_existing_data(self, existing_data: Dict, new_data: Dict) -> Dict:
-        preserved_title = existing_data.get('title', '')
+        preserved_title = existing_data.get('title') or new_data.get('title') or ''
         updated_data = new_data.copy()
         updated_data['title'] = preserved_title
+        
+        preserved_seo = existing_data.get('seo_url')
+        if not preserved_seo:
+            preserved_seo = self.generate_slug(preserved_title)
+        updated_data['seo_url'] = preserved_seo
         
         if existing_data.get('kategori'):
             updated_data['kategori'] = existing_data['kategori']
@@ -662,7 +642,7 @@ class AsyncAPIClient:
     
     async def __aenter__(self):
         timeout = aiohttp.ClientTimeout(total=30)
-        connector = aiohttp.TCPConnector(limit_per_host=10, limit=20)
+        connector = aiohttp.TCPConnector(limit_per_host=10, limit=20, ssl=False)
         self.session = aiohttp.ClientSession(
             timeout=timeout,
             connector=connector,
@@ -775,13 +755,17 @@ class AsyncAPIClient:
         for video in existing_videos:
             filecode = video.get('filecode') or video.get('file_code', '')
             title = video.get('title', '')
+            seo_url = video.get('seo_url', '')
             if filecode and title:
-                existing_titles_map[filecode] = title
+                existing_titles_map[filecode] = {'title': title, 'seo_url': seo_url}
         
         for video in new_videos:
             filecode = video.get('filecode') or video.get('file_code', '')
             if filecode in existing_titles_map:
-                video['title'] = existing_titles_map[filecode]
+                preserved_data = existing_titles_map[filecode]
+                video['title'] = preserved_data['title']
+                if preserved_data.get('seo_url'):
+                    video['seo_url'] = preserved_data['seo_url']
                 video['title_preserved'] = True
             else:
                 video['title_preserved'] = False
@@ -860,7 +844,14 @@ def merge_video_data(new_videos: List[Dict], existing_videos: List[Dict]) -> Lis
             merged_video = new_video.copy()
             
             # Preserve important fields from existing data
-            merged_video['title'] = existing_video.get('title', new_video['title'])
+            preserved_title = existing_video.get('title') or new_video.get('title') or ''
+            merged_video['title'] = preserved_title
+            
+            preserved_seo = existing_video.get('seo_url')
+            if not preserved_seo:
+                preserved_seo = DataNormalizer().generate_slug(preserved_title)
+            merged_video['seo_url'] = preserved_seo
+            
             merged_video['kategori'] = existing_video.get('kategori', new_video.get('kategori'))
             merged_video['custom_fields'] = existing_video.get('custom_fields', new_video.get('custom_fields', {}))
             merged_video['title_preserved'] = True
@@ -971,8 +962,8 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
     index_dir = output / "index"
     detail_dir = output / "detail"
 
-    index_dir.mkdir(parents=True, exist_ok=True)
-    detail_dir.mkdir(parents=True, exist_ok=True)
+    index_dir.mkdir(exist_ok=True)
+    detail_dir.mkdir(exist_ok=True)
 
     # Batch sharding: gunakan MD5 hex (00-ff) untuk 256 shard files
     batch_shards: Dict[str, List[Dict]] = {}
@@ -984,6 +975,9 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
             continue
 
         title = v.get("title", "")
+        seo_url = v.get("seo_url")
+        if not seo_url:
+            seo_url = DataNormalizer().generate_slug(title)
         norm = normalize_title_for_search(title)
 
         page = (i // per_page) + 1
@@ -992,10 +986,21 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
         # ===== BATCH SHARD (256 files max: 00.json - ff.json) =====
         shard_key = get_md5_shard(vid)  # Returns "00" to "ff"
         
+        # Konversi length string ("00:05:18") menjadi integer detik sekali saja
+        length_raw = v.get("length", "")
+        if isinstance(length_raw, str) and ":" in length_raw:
+            parts = list(reversed(length_raw.split(':')))
+            length_secs = sum(int(p) * (60 ** i) for i, p in enumerate(parts))
+        elif isinstance(length_raw, (int, float)):
+            length_secs = int(length_raw)
+        else:
+            length_secs = 0
+        
         detail = {
             "f": vid,  # filecode
             "t": title,  # title
             "t_esc": v.get("t_esc"), # escaped title
+            "seo_url": seo_url,
             "ds": v.get("deskripsi"),  # deskripsi
             "ds_esc": v.get("ds_esc"), # escaped deskripsi
             "tg": v.get("tag"),  # tag
@@ -1004,8 +1009,7 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
             "si": v.get("single_img"),  # single_img
             "sp": v.get("splash_img"),  # splash_img
             "sz": v.get("size"),  # size
-            "ln": v.get("length"),  # length
-            "dr": v.get("duration"),  # duration
+            "ln": length_secs,  # length dalam detik (integer)
             "vw": v.get("views", 0),  # views
             "vw_fmt": v.get("vw_fmt"), # formatted views
             "up": v.get("uploaded"),  # uploaded
@@ -1028,11 +1032,14 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
             "f": vid,  # filecode
             "t": title,  # title
             "t_esc": v.get("t_esc"),
-            "ln": v.get("length"),  # length
+            "seo_url": seo_url,
+            "ln": length_secs,  # length dalam detik (integer)
             "sp": v.get("splash_img"),  # splash_img
             "si": v.get("single_img"),  # single_img
             "vw": v.get("views", 0),  # views
+            "kt": v.get("kategori"), 
             "vw_fmt": v.get("vw_fmt"),
+            "as": v.get("api_source"),
             "up": v.get("uploaded"),  # uploaded
             "up_fmt": v.get("up_fmt"),
             "up_short": v.get("up_short"),
@@ -1065,7 +1072,7 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
         else:
             # Jika items > PREFIX2_LIMIT, buat subdirectory dan split by prefix-3
             subdir = index_dir / p2
-            subdir.mkdir(parents=True, exist_ok=True)
+            subdir.mkdir(exist_ok=True)
             bucket3: Dict[str, List[Dict]] = {}
 
             for item in items:
@@ -1137,8 +1144,9 @@ def generate_static_indexes_sharded(videos: List[Dict], per_page: int):
 def generate_static_list_files(videos: List[Dict], per_page: int = 100):
     output = Path("public/data")
     list_dir = output / "list"
-    list_dir.mkdir(parents=True, exist_ok=True)
+    list_dir.mkdir(exist_ok=True)
 
+    normalizer = DataNormalizer()
     total = len(videos)
     total_pages = (total + per_page - 1) // per_page
 
@@ -1151,18 +1159,26 @@ def generate_static_list_files(videos: List[Dict], per_page: int = 100):
             if not vid:
                 continue
 
+            title = v.get("title")
+            seo_url = v.get("seo_url")
+            if not seo_url:
+                seo_url = normalizer.generate_slug(title or "")
+                
             items.append({
                 "download_url": v.get("protected_dl"),
-                "single_img": v.get("single_img"),
-                "file_code": vid,
-                "length": v.get("length", ""),
-                "views": str(v.get("views", 0)),
+                "si": v.get("single_img"),
+                "f": vid,
+                "ln": normalizer.parse_duration(v.get("length", 0)),
+                "vw": str(v.get("views", 0)),
                 "vw_fmt": v.get("vw_fmt"),
-                "uploaded": v.get("uploaded"),
+                "up": v.get("uploaded"),
                 "up_fmt": v.get("up_fmt"),
+                "kt": v.get("kategori"),
+                "as": v.get("api_source"),
                 "up_short": v.get("up_short"),
-                "title": v.get("title"),
-                "t_esc": v.get("t_esc")
+                "t": title,
+                "t_esc": v.get("t_esc"),
+                "seo_url": seo_url
             })
 
         server_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

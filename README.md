@@ -1,5 +1,6 @@
 # Video Site Project
 
+  npx -y wrangler pages dev public --port 8785
 Proyek ini adalah situs web video statis yang dihosting di Cloudflare Pages dengan fungsionalitas serverless menggunakan Cloudflare Functions.
 
 ## Struktur Proyek
