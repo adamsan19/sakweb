@@ -13,7 +13,6 @@ export async function onRequest(context) {
     const url = new URL(request.url);
     const p = url.pathname;
 
-    // Route handlers dengan cache
     if (p === "/" || p === "") return withCache(request, () => list(url, env, "1"));
     if (p === "/robots.txt") return withCache(request, () => robots(request));
     if (p === "/sitemap.xml") return withCache(request, () => sitemap(url, env));
