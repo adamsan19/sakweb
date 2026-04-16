@@ -4,390 +4,573 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menampilkan Data JSON dan Video</title>
+    <title>Video Search + Title Generator</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #121212;
-            padding: 20px;
-            color: #e5e5e5;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        input[type="text"] {
-            padding: 10px;
-            width: 280px;
-            margin-right: 5px;
-            margin-bottom: 10px;
-            border: 1px solid #333;
-            background: #1e1e1e;
-            color: #e5e5e5;
-            border-radius: 6px;
-        }
-
-        input[type="text"]::placeholder {
-            color: #777;
-        }
-
-        button {
-            padding: 10px 16px;
-            background: #1f6feb;
-            border: none;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #1158c7;
-        }
-
-        #result {
-            background: #1a1a1a;
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #2a2a2a;
-            color: #e5e5e5;
-            width: 100%;
-            min-height: 400px;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            resize: vertical;
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
-        .result-item p {
-            background: #222;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #0a0a0a;
             color: #e5e5e5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            border-left: 4px solid #e50914;
+            padding-left: 12px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        input, button, textarea, select {
+            background: #1e1e1e;
             border: 1px solid #333;
-            word-break: break-word;
-        }
-
-        .title-hidden {
-            display: none;
-        }
-
-        #custom-player {
-            margin-top: 20px;
+            color: #fff;
+            padding: 10px 14px;
             border-radius: 8px;
-            background: black;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: #e50914;
+        }
+
+        button {
+            background: #e50914;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #b81a24;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #2c2c2c;
+        }
+
+        .btn-secondary:hover {
+            background: #3a3a3a;
+        }
+
+        .btn-generate {
+            background: #10b981;
+        }
+
+        .btn-generate:hover {
+            background: #059669;
+        }
+
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: #141414;
+            padding: 8px 15px;
+            border-radius: 40px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 450px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            resize: vertical;
+            margin-top: 15px;
+        }
+
+        .status-badge {
+            background: #2c2c2c;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        hr {
+            border-color: #2c2c2c;
+            margin: 15px 0;
+        }
+
+        .info-panel {
+            background: #141414;
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (max-width: 700px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .checkbox-group {
+                justify-content: center;
+            }
         }
     </style>
 </head>
 
 <body>
-    <h1>Data dari API</h1>
-    <input type="text" id="searchTerm" placeholder="Masukkan kata kunci...">
-    <input type="text" id="customDomain" placeholder="Masukkan domain (pisahkan dengan koma)" value="doodi.pages.dev">
-    <input type="text" id="customRandomTitles" placeholder="Masukkan judul acak (pisahkan dengan koma)">
-    <button id="searchButton">Cari</button>
-    <button id="listButton">Tampilkan Semua</button>
-    <button id="saveButton">Simpan Kata Kunci</button>
-    <button id="toggleTitleButton">Sembunyikan Title</button>
-    <textarea id="result" class="result-item"></textarea>
-    <div id="custom-player"></div>
+<div class="container">
+    <h1>🎬 Video Search + Judul Generator</h1>
 
-    <script>
-        const defaultRandomTitles = [
-            "malming"
-        ];
+    <div class="info-panel">
+        <span class="status-badge">📌 Mode: <span id="modeStatus">Normal</span></span>
+        <span class="status-badge">🎲 Icon & CTA aktif</span>
+    </div>
 
-        let currentDomainIndex = 0; // Indeks untuk domain saat ini
-        let titlesVisible = true; // Status visibility title
+    <div class="controls">
+        <input type="text" id="searchTerm" placeholder="Cari video..." style="flex:2; min-width: 180px;">
+        <input type="text" id="customDomain" placeholder="Domain (pisah koma)" value="doodi.pages.dev,dodk.pages.dev,videk.pages.dev" style="flex:2;">
+        <button id="searchButton">🔍 Cari</button>
+        <button id="listButton" class="btn-secondary">📋 Random List</button>
+        <button id="saveButton" class="btn-secondary">💾 Simpan Kata Kunci</button>
+        <button id="toggleTitleButton" class="btn-secondary">👁️ Sembunyikan Title</button>
+    </div>
 
-        // Konten tambahan yang akan disisipkan di sela-sela hasil
-        const additionalContent = [
-            { title: 'ome tv vcs suara sound on sporty', link: 'dodll.pages.dev/f/vcs' },
-            { title: 'stw binor hijab doodstream', link: 'dodll.pages.dev/f/stw-binor' },
-            { title: 'prank ojol malming full percakapan MUFC', link: 'dodll.pages.dev/f/prank-ojol' },
-            { title: 'stw tobrut terbaru dood videy', link: 'dodll.pages.dev/f/stw-tobrut' },
-            { title: 'hijab binor viral videy', link: 'dodll.pages.dev/f/hijab-binor' },
-            { title: 'hijab tobrut doods videy', link: 'dodll.pages.dev/f/hijab-tobrut' },
-            { title: 'skandal selingkuh videy doods', link: 'dodll.pages.dev/f/selingkuh' },
-            { title: 'hijab viral', link: 'dodll.pages.dev/f/hijab-viral' },
-            { title: 'videy doods terbaru', link: 'dodll.pages.dev/f/video-indo' },
-            { title: 'Tante Yona terbaru', link: 'dodll.pages.dev/f/tante-yona' },
-            { title: 'STW tobrut videy dood', link: 'dodll.pages.dev/f/stw-tobrut' },
-            { title: 'rank ojol terbaru full percakapan', link: 'dodk.pages.dev/f/prank-ojol' },
-            { title: 'meli3gp dood viral', link: 'dodll.pages.dev/f/meli3gp' },
-            { title: 'Hijab Tobrut', link: 'dodll.pages.dev/f/hijab-tobrut' },
-            { title: 'binor', link: 'dodll.pages.dev/f/binor' },
-            { title: 'stw', link: 'dodll.pages.dev/f/stw' },
-            { title: 'Stw tobrut', link: 'dodll.pages.dev/f/stw-tobrut' },
-            { title: 'hijab tobrut doods videy', link: 'dodll.pages.dev/f/hijab-tobrut' },
-            { title: 'pijat plus full percakapan', link: 'dodll.pages.dev/f/pijat-plus' },
-            { title: 'tante yona terbaru doods dood', link: 'videk.pages.dev/f/tante-yona' },
-            { title: 'hijab tobrut videy indo dood', link: 'dodll.pages.dev/f/hijab' },
-            { title: 'Stw videy dood indo', link: 'videyk.pages.dev/f/stw' },
-            { title: 'Mbah Maryono pijit Stw', link: 'dodll.pages.dev/f/mbah-maryono' },
-            { title: 'stw tobrut terbaru dood videy', link: 'dodll.pages.dev/f/stw-tobrut' },
-            { title: 'hijab binor viral videy', link: 'dodll.pages.dev/f/hijab-binor' },
-            { title: 'Tante Yona terbaru', link: 'dodll.pages.dev/f/tante-yona' },
-            { title: 'STW tobrut videy dood', link: 'dodll.pages.dev/f/stw-tobrut' },
-            { title: 'brother musang', link: 'dodll.pages.dev/f/brother-musang' },
-            { title: 'stw viral doods videy', link: 'dodll.pages.dev/f/stw-viral' },
-            { title: 'prank ojol full percakapan', link: 'dodll.pages.dev/f/prank-ojol' },
-            { title: 'meli3gp dood viral', link: 'dodll.pages.dev/f/meli3gp' },
-            { title: 'Selebgram viral selingkuh', link: 'dodll.pages.dev/f/selebgram' },
-            { title: 'acha viral kacamata', link: 'dodll.pages.dev/f/acha-viral' },
-            { title: 'Baby Putie', link: 'dodll.pages.dev/f/baby-putie' },
-            { title: 'Tante yona', link: 'dodll.pages.dev/f/tante-yona' },
-            { title: 'pijat plus', link: 'dodll.pages.dev/f/pijat-plus' },
-            { title: 'stw', link: 'dodll.pages.dev/f/stw' },
-            { title: 'binor full percakapan', link: 'dodll.pages.dev/f/binor' },
-            { title: 'Zalva Rexona', link: 'dodll.pages.dev/f/zalva' },
-            { title: 'Viral Hilda Pricillya', link: 'dodk.pages.dev/f/hilda' },
-            { title: 'videy indo dood', link: 'videk.pages.dev/f/hijab-cantik' },
-            { title: 'jilbab doodstream', link: 'videk.pages.dev/f/jilbab-viral' },
-            { title: 'tante stw enak banget', link: 'dodll.pages.dev/f/tante-stw' },
-            { title: 'Vidio Mbah Maryono Binor', link: 'dodll.pages.dev/f/mbah-maryono' },
-            { title: 'Mbah Maryono 50 Yang Lagi Viral', link: 'dodll.pages.dev/f/mbah-maryono' },
-            { title: 'Mbah Maryono Colok Mmk Stw', link: 'dodll.pages.dev/e/yihtgk16z1gn' },
-            { title: 'Pijat Mbah Maryono Sama Tante', link: 'dodll.pages.dev/e/tok37i6x7t3l' },
-            { title: 'Daisy Bae Jilbab Pink', link: 'dodll.pages.dev/f/daisy-bae' },
-            { title: 'enaknya di muka tante stw', link: 'dodll.pages.dev/f/pejuhin-tante' },
-            { title: 'tante stw', link: 'dodll.pages.dev/f/tante-stw' },
-            { title: 'tante stw ngwe ujan', link: 'dodll.pages.dev/f/ngewe-tante' },
-            { title: 'bo tante stw s3mok', link: 'dodll.pages.dev/f/tante-semok' },
-            { title: 'stw 6', link: 'dodll.pages.dev/f/stw' },
-            { title: 'pijat tante cangcut ungu', link: 'dodll.pages.dev/f/pijat-tante' },
-            { title: 'tante pijat crt didalam', link: 'dodll.pages.dev/f/tante' },
-            { title: 'tante kina', link: 'dodll.pages.dev/f/tante-kina' },
-        ];
+    <div class="flex-row">
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="showAdditionalContent" checked> + Konten Tambahan
+            </label>
+            <label>
+                Max Kata: <input type="number" id="maxWordsInput" value="3" min="1" max="10" style="width: 60px;">
+            </label>
+            <label>
+                <input type="checkbox" id="enableGenerator" checked> 🌟 Aktifkan Generator Judul Unik
+            </label>
+        </div>
+    </div>
 
-        function getRandomAdditionalContent() {
-            const randomIndex = Math.floor(Math.random() * additionalContent.length);
-            return additionalContent[randomIndex];
+    <div class="flex-row" id="generatorOptions" style="border-top: 1px solid #2c2c2c; padding-top: 12px;">
+        <label>🎨 Icon Kiri: 
+            <select id="iconStyle">
+                <option value="random">Random (🔥⚡🎬💥📌🚀)</option>
+                <option value="none">Tanpa Icon Kiri</option>
+            </select>
+        </label>
+        <label>✨ Icon Kanan: 
+            <select id="rightIconStyle">
+                <option value="random">Random (✨🌟💖🌸💎)</option>
+                <option value="none">Tanpa Icon Kanan</option>
+            </select>
+        </label>
+        <label>📢 CTA: 
+            <select id="ctaStyle">
+                <option value="random">Random CTA (Nonton ➡️ / Klik ➡️ dll)</option>
+                <option value="none">Tanpa CTA</option>
+            </select>
+        </label>
+        <button id="regeneratePreviewBtn" class="btn-secondary" style="padding: 8px 16px;">🔄 Regenerate Preview</button>
+    </div>
+
+    <textarea id="result" placeholder="Hasil pencarian & judul akan tampil di sini..."></textarea>
+</div>
+
+<script>
+    // ======================= KONFIGURASI GENERATOR =======================
+    const leftIcons = ["🔥", "⚡", "🎬", "💥", "📌", "🚀", "💎", "👑", "🎀", "🍼", "👶", "🧴", "💪", "🏆", "⭐", "💋", "🌹", "🎭", "💄", "🌀", "🔞", "💢"];
+    const rightIcons = ["✨", "🌟", "💖", "🌸", "🎀", "💎", "🏆", "🔥", "⚡", "💕", "🦄", "🌹", "💋", "⭐", "🌀"];
+    const ctaTexts = [
+        "Nonton di sini ➡️", "Klik ➡️", "Watch here ➡️", "Link ➡️", "Klik linknya ➡️",
+        "Tonton ➡️", "Cek ➡️", "Buka ➡️", "Lihat ➡️", "👉 Klik", "➡️ Watch", "— Klik aja ➡️",
+        "Full video ➡️", "HD ➡️", "Terbaru ➡️", "Viral ➡️"
+    ];
+
+    const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    function generateUniqueTitle(rawTitle, options = {}) {
+        // options: useLeftIcon, useRightIcon, useCta
+        let result = "";
+        // Icon kiri
+        if (options.useLeftIcon && document.getElementById('iconStyle')?.value !== 'none') {
+            result += random(leftIcons) + " ";
         }
+        // Title utama (clean title dari fungsi existing)
+        result += rawTitle;
+        // Icon kanan
+        if (options.useRightIcon && document.getElementById('rightIconStyle')?.value !== 'none') {
+            result += " " + random(rightIcons);
+        }
+        // CTA
+        if (options.useCta && document.getElementById('ctaStyle')?.value !== 'none') {
+            result += " — " + random(ctaTexts);
+        }
+        return result;
+    }
 
-        document.getElementById('searchButton').addEventListener('click', function () {
-            const searchTerm = document.getElementById('searchTerm').value;
-            const url = `https://scrapy-01q.pages.dev/api/search?q=${encodeURIComponent(searchTerm)}`;
+    // ======================= DATA ASLI =======================
+    const defaultRandomTitles = [
+        "videy indo dood", "vidio viral", "doodstream terbaru", "full percakapan", "yang lagi viral",
+    ];
 
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const searchTerm = document.getElementById('searchTerm').value;
-                    const sortedResults = sortResultsByRelevance(data.result, searchTerm);
-                    displayResults(sortedResults, searchTerm);
-                })
-                .catch(error => {
-                    console.error('There was a problem with the fetch operation:', error);
-                    document.getElementById('result').value = 'Terjadi kesalahan saat mengambil data.';
-                });
+    const additionalContent = [
+        { title: '📁 ome tv vcs suara sound on sporty', link: 'videk.pages.dev/f/ometv' },
+        { title: '📁 vcs suara sound on', link: 'videk.pages.dev/f/vcs' },
+        { title: '📁 stw binor hijab', link: 'videk.pages.dev/f/stw-binor' },
+        { title: '📁 prank ojol', link: 'videk.pages.dev/f/prank-ojol' },
+        { title: '📁 stw', link: 'videk.pages.dev/f/stw' },
+        { title: '📁 hijab binor ', link: 'videk.pages.dev/f/hijab-binor' },
+        { title: '📁 hijab tobrut', link: 'videk.pages.dev/f/hijab-tobrut' },
+        { title: '📁 skandal selingkuh', link: 'videk.pages.dev/f/selingkuh' },
+        { title: '📁 hijab viral', link: 'videk.pages.dev/f/hijab-viral' },
+        { title: '📁 videy doods', link: 'videk.pages.dev/f/video-indo' },
+        { title: '📁 Tante Yona', link: 'videk.pages.dev/f/tante-yona' },
+        { title: '📁 STW tobrut', link: 'videk.pages.dev/f/stw-tobrut' },
+        { title: '📁 rank ojol', link: 'dodk.pages.dev/f/prank-ojol' },
+        { title: '📁 meli3gp dood viral', link: 'videk.pages.dev/f/meli3gp' },
+        { title: '📁 Hijab Tobrut', link: 'videk.pages.dev/f/hijab-tobrut' },
+        { title: '📁 binor', link: 'videk.pages.dev/f/binor' },
+        { title: '📁 acha viral', link: 'videk.pages.dev/f/acha-viral' },
+        { title: '📁 Baby Putie', link: 'videk.pages.dev/f/baby-putie' },
+        { title: '📁 Zalva Rexona', link: 'videk.pages.dev/f/zalva' },
+        { title: '📁 Hilda Pricillya', link: 'dodk.pages.dev/f/hilda' },
+    ];
+
+    function getRandomAdditionalContent() {
+        const randomIndex = Math.floor(Math.random() * additionalContent.length);
+        return additionalContent[randomIndex];
+    }
+
+    // State
+    let currentDomainIndex = 0;
+    let titlesVisible = true;
+    let lastResults = [];      // menyimpan hasil terakhir untuk regenerasi
+    let lastSearchTerm = '';
+
+    // DOM Elements
+    const searchInput = document.getElementById('searchTerm');
+    const customDomainInput = document.getElementById('customDomain');
+    const searchBtn = document.getElementById('searchButton');
+    const listBtn = document.getElementById('listButton');
+    const saveBtn = document.getElementById('saveButton');
+    const toggleTitleBtn = document.getElementById('toggleTitleButton');
+    const resultTextarea = document.getElementById('result');
+    const showAdditionalCheck = document.getElementById('showAdditionalContent');
+    const maxWordsInput = document.getElementById('maxWordsInput');
+    const enableGeneratorCheck = document.getElementById('enableGenerator');
+    const regeneratePreviewBtn = document.getElementById('regeneratePreviewBtn');
+
+    // Helper functions
+    function getNextDomain() {
+        const domains = customDomainInput.value.split(',').map(d => d.trim()).filter(d => d);
+        if (domains.length === 0) return 'doodi.pages.dev';
+        const domain = domains[currentDomainIndex];
+        currentDomainIndex = (currentDomainIndex + 1) % domains.length;
+        return domain;
+    }
+
+    function formatLink(link) {
+        if (!link.startsWith('http://') && !link.startsWith('https://')) {
+            return `https://${link}`;
+        }
+        return link;
+    }
+
+    function cleanTitle(title) {
+        const forbiddenWords = ['di', 'ke', 'dari', 'pada', 'yang', 'untuk', 'dan', 'atau', 'tapi', 'tetapi',
+            'dengan', 'oleh', 'karena', 'sehingga', 'agar', 'supaya', 'jika', 'kalau',
+            'apabila', 'walau', 'meski', 'walaupun', 'meskipun', 'sementara',
+            'sedang', 'ketika', 'saat', 'setelah', 'sebelum', 'hingga', 'sampai',
+            'demi', 'lewat', 'melalui', 'via', 'tanpa', 'sejak', 'selama', 'ketika',
+            'sambil', 'seraya', 'biar', 'meski', 'meskipun', 'agar', 'supaya',
+            'atas', 'bawah', 'depan', 'belakang', 'samping', 'dalam', 'luar',
+            'antara', 'sekitar', 'sebelah', 'hadap', 'tepi', 'pinggir', 'ujung',
+            'kah', 'lah', 'tah', 'pun', 'nya',
+            'se', 'ber', 'ter', 'me', 'pe', 'per', 'mem', 'pen', 'peng', 'men',
+            'pem', 'pel', 'ber', 'ter', 'ke', 'di', 'per', 'se', 'meng', 'meny',
+            'memper', 'mempert', 'diper', 'terper',
+            'kan', 'an', 'i', 'nya', 'ku', 'mu',
+            'ini', 'itu', 'sini', 'situ', 'sana', 'kamu', 'aku', 'saya', 'kita',
+            'mereka', 'dia', 'beliau', 'anda', 'kalian', 'kami', 'engkau', 'kau',
+            'beliau', 'nya',
+            'sebuah', 'suatu', 'sang', 'si', 'para', 'kaum', 'segala', 'seluruh',
+            'semua', 'setiap', 'masing', 'beberapa', 'sedikit', 'banyak', 'semua',
+            'adalah', 'ialah', 'merupakan', 'menjadi', 'bisa', 'dapat', 'mampu',
+            'harus', 'wajib', 'perlu', 'hendak', 'akan', 'sedang', 'telah', 'sudah',
+            'pernah', 'belum', 'masih', 'baru', 'hanya', 'cuma', 'sekadar', 'hampir',
+            'nyaris', 'agak', 'cukup', 'terlalu', 'amat', 'sangat', 'benar', 'sungguh',
+            'ada', 'tidak', 'bukan', 'jangan', 'janganlah', 'usah', 'jangan',
+            'mohon', 'tolong', 'harap', 'silahkan', 'mari', 'ayo', 'ayolah',
+            'wah', 'aduh', 'astaga', 'ya', 'tidak', 'bukan',
+            'dalam', 'oleh', 'pada', 'sebagai', 'bagi', 'menurut', 'tentang',
+            'mengenai', 'atas', 'bawah', 'depan', 'belakang', 'samping', 'antara',
+            'di', 'ke', 'dari', 'demi', 'hingga', 'sampai', 'selama', 'sementara',
+            'seraya', 'ketika', 'sewaktu', 'sebelum', 'sesudah', 'setelah', 'sejak',
+            'tatkala', 'selagi', 'sedangkan', 'sambil', 'seraya', 'biar', 'meski',
+            'walau', 'walaupun', 'meskipun', 'supaya', 'agar', 'untuk', 'guna',
+            'dengan', 'tanpa', 'via', 'lewat', 'melalui', 'oleh', 'sebab', 'karena',
+            'lantas', 'lalu', 'kemudian', 'maka', 'oleh_karena', 'sehingga',
+            'maka_dari', 'adapun', 'akan', 'bahwa', 'bahwasanya', 'sebab', 'jika',
+            'kalau', 'apabila', 'andai', 'andaikata', 'seandainya', 'seumpama',
+            'seakan', 'seolah', 'ibarat', 'sebagaimana', 'seperti', 'bagai',
+            'laksana', 'daripada', 'alih', 'daripada',
+            'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan',
+            'sembilan', 'sepuluh', 'seratus', 'seribu', 'sejuta', 'pertama',
+            'kedua', 'ketiga', 'keempat', 'kelima', 'bokep', 'memek', 'Update', 'ngentot', 'ngewe', 'colmek', 'pepek', 'muncrat', 'kontol', 'jilmek', 'perkosa'];
+        let cleanedTitle = title;
+        forbiddenWords.forEach(word => {
+            const regex = new RegExp(`\\b${word}\\b`, 'gi');
+            cleanedTitle = cleanedTitle.replace(regex, '');
         });
-
-        document.getElementById('listButton').addEventListener('click', function () {
-            // Generate random page number antara 1-539
-            const randomPage = Math.floor(Math.random() * 539) + 1;
-            const url = `https://full-apis.pages.dev/api/list?page=${randomPage}`;
-
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.result && data.result.files) {
-                        const searchTerm = ''; // Untuk list semua, tidak ada kata kunci
-                        displayResults(data.result.files, searchTerm);
-                    } else {
-                        document.getElementById('result').value = 'Tidak ada hasil ditemukan.';
-                    }
-                })
-                .catch(error => {
-                    console.error('There was a problem with the fetch operation:', error);
-                    document.getElementById('result').value = 'Terjadi kesalahan saat mengambil data.';
-                });
-        });
-
-        document.getElementById('saveButton').addEventListener('click', function () {
-            const searchTerm = document.getElementById('searchTerm').value;
-            const blob = new Blob([searchTerm], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'kata_kunci.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url); // Bebaskan URL setelah digunakan
-        });
-
-        document.getElementById('toggleTitleButton').addEventListener('click', function () {
-            titlesVisible = !titlesVisible;
-            const titleElements = document.querySelectorAll('.result-title');
-            const button = document.getElementById('toggleTitleButton');
-
-            titleElements.forEach(element => {
-                if (titlesVisible) {
-                    element.classList.remove('title-hidden');
-                } else {
-                    element.classList.add('title-hidden');
-                }
-            });
-
-            button.textContent = titlesVisible ? 'Sembunyikan Title' : 'Tampilkan Title';
-        });
-
-        function cleanTitle(title) {
-            const forbiddenWords = ['bokep', 'memek', 'Update', 'ngentot', 'ngewe', 'colmek', 'pepek', 'muncrat', 'kontol', 'jilmek', 'perkosa'];
-            let cleanedTitle = title;
-
-            forbiddenWords.forEach(word => {
-                const regex = new RegExp(`\\b${word}\\b`, 'gi');
-                cleanedTitle = cleanedTitle.replace(regex, '');
-            });
-
-            const words = cleanedTitle.trim().split(/\s+/);
-            const maxWords = 3;
-            let result = [];
-
-            for (let i = 0; i < words.length; i++) {
-                if (result.length < maxWords) {
+        const words = cleanedTitle.trim().split(/\s+/);
+        const maxWords = parseInt(maxWordsInput.value) || 3;
+        let result = [];
+        for (let i = 0; i < words.length; i++) {
+            if (result.length < maxWords) {
+                result.push(words[i]);
+            } else {
+                if (i < words.length - 1 && (words[i] === 'dan' || words[i] === 'atau' || words[i] === 'serta')) {
                     result.push(words[i]);
-                } else {
-                    if (i < words.length - 1 && (words[i] === 'dan' || words[i] === 'atau' || words[i] === 'serta')) {
-                        result.push(words[i]);
-                        break;
-                    }
                     break;
                 }
+                break;
             }
-
-            return result.join(' ');
         }
+        return result.join(' ');
+    }
 
-        function getRandomTitle() {
-            const customTitlesInput = document.getElementById('customRandomTitles').value;
-            const customTitles = customTitlesInput.split(',').map(title => title.trim()).filter(title => title);
-            const titlesToUse = customTitles.length > 0 ? customTitles : defaultRandomTitles;
-            const randomIndex = Math.floor(Math.random() * titlesToUse.length);
-            return titlesToUse[randomIndex];
-        }
-
-        function getNextDomain() {
-            const customDomainInput = document.getElementById('customDomain').value;
-            const domains = customDomainInput.split(',').map(domain => domain.trim()).filter(domain => domain);
-            if (domains.length === 0) return 'doodi.pages.dev'; // Default domain jika tidak ada input
-            const domain = domains[currentDomainIndex];
-            currentDomainIndex = (currentDomainIndex + 1) % domains.length; // Update indeks untuk domain berikutnya
-            return domain;
-        }
-
-        function calculateRelevanceScore(result, searchTerm) {
-            if (!searchTerm || !result.title) return 0;
-
-            const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(word => word.length > 0);
-            const title = result.title.toLowerCase();
-            let score = 0;
-
-            // Hitung skor berdasarkan kemunculan kata kunci
-            searchWords.forEach(word => {
-                // Exact match di awal judul (skor tertinggi)
-                if (title.startsWith(word)) {
-                    score += 100;
-                }
-                // Exact match di tengah judul
-                else if (title.includes(' ' + word + ' ')) {
-                    score += 50;
-                }
-                // Partial match (kata kunci muncul sebagai substring)
-                else if (title.includes(word)) {
-                    score += 25;
-                }
-
-                // Bonus jika semua kata kunci ada
-                const wordCount = searchWords.filter(w => title.includes(w)).length;
-                if (wordCount === searchWords.length) {
-                    score += 30;
-                }
-            });
-
-            // Bonus untuk judul yang lebih pendek (lebih relevan)
-            if (title.length < 50) {
-                score += 10;
+    function getRandomTitle() {
+        const customTitlesInput = document.getElementById('customRandomTitles');
+        if (customTitlesInput) {
+            const customTitles = customTitlesInput.value.split(',').map(title => title.trim()).filter(title => title);
+            if (customTitles.length) {
+                return random(customTitles);
             }
+        }
+        return random(defaultRandomTitles);
+    }
 
-            return score;
+    function displayResultsWithGenerator(results, searchTerm = '') {
+        let output = '';
+        if (!results || results.length === 0) {
+            resultTextarea.value = 'Tidak ada hasil ditemukan.';
+            return;
         }
 
-        function sortResultsByRelevance(results, searchTerm) {
-            if (!searchTerm || !results || results.length === 0) return results;
+        const generatorActive = enableGeneratorCheck.checked;
+        const useLeft = (document.getElementById('iconStyle')?.value !== 'none');
+        const useRight = (document.getElementById('rightIconStyle')?.value !== 'none');
+        const useCta = (document.getElementById('ctaStyle')?.value !== 'none');
 
-            // Buat salinan array dan tambahkan skor relevansi
-            const resultsWithScore = results.map(result => ({
-                ...result,
-                relevanceScore: calculateRelevanceScore(result, searchTerm)
-            }));
+        results.forEach((result, idx) => {
+            const cleanedTitle = cleanTitle(result.title);
+            let finalTitle = cleanedTitle;
+            const randomSecondary = getRandomTitle();
 
-            // Urutkan berdasarkan skor (tertinggi ke terendah)
-            return resultsWithScore.sort((a, b) => b.relevanceScore - a.relevanceScore);
-        }
-
-        function formatLink(link) {
-            // Pastikan link memiliki http:// atau https://
-            if (!link.startsWith('http://') && !link.startsWith('https://')) {
-                return `https://${link}`;
-            }
-            return link;
-        }
-
-        function displayResults(results, searchTerm = '') {
-            const resultTextarea = document.getElementById('result');
-            let output = '';
-
-            if (results && results.length > 0) {
-                results.forEach((result, index) => {
-                    const cleanedTitle = cleanTitle(result.title);
-                    const randomTitle = getRandomTitle();
-                    const link = formatLink(`${getNextDomain()}/e/${result.file_code}`); // Menggunakan domain yang diperoleh
-
-                    if (titlesVisible) {
-                        output += `${cleanedTitle}  ${randomTitle}\n${link}\n\n`;
-                    } else {
-                        output += `${link}\n\n`;
-                    }
-
-                    // Sisipkan konten tambahan setelah setiap 1 result
-                    const additional = getRandomAdditionalContent();
-                    const additionalLink = formatLink(additional.link);
-                    output += `${additional.title}\n${additionalLink}\n\n`;
+            if (generatorActive) {
+                // generate judul unik dengan icon dan cta
+                finalTitle = generateUniqueTitle(cleanedTitle, {
+                    useLeftIcon: useLeft,
+                    useRightIcon: useRight,
+                    useCta: useCta
                 });
             } else {
-                output = 'Tidak ada hasil ditemukan.';
+                // mode normal: cleanedTitle + randomTitle
+                finalTitle = `${cleanedTitle}  ${randomSecondary}`;
             }
 
-            resultTextarea.value = output;
-        }
+            const link = formatLink(`${getNextDomain()}/e/${result.file_code}`);
 
-        // ====== TAMBAHAN: tekan Enter di input akan jalankan pencarian ======
-        const searchInput = document.getElementById('searchTerm');
-        searchInput.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // cegah submit form default kalau nanti pakai form
-                document.getElementById('searchButton').click();
+            if (titlesVisible) {
+                output += `${finalTitle}\n${link}\n\n`;
+            } else {
+                output += `${link}\n\n`;
+            }
+
+            // Sisipkan konten tambahan jika diaktifkan
+            if (showAdditionalCheck.checked) {
+                const additional = getRandomAdditionalContent();
+                const additionalLink = formatLink(additional.link);
+                output += `${additional.title}\n${additionalLink}\n\n`;
             }
         });
-        // ===================================================================
-    </script>
+
+        resultTextarea.value = output;
+        document.getElementById('modeStatus').innerText = generatorActive ? '🎨 Generator ON' : 'Normal';
+    }
+
+    // Fungsi untuk memanggil API dan render
+    function performSearch(query = null) {
+        const searchTerm = query !== null ? query : document.getElementById('searchTerm').value;
+        if (!searchTerm.trim()) {
+            alert("Masukkan kata kunci terlebih dahulu");
+            return;
+        }
+        const url = `https://scrapy-01q.pages.dev/api/search?q=${encodeURIComponent(searchTerm)}`;
+        fetch(url)
+            .then(response => response.ok ? response.json() : Promise.reject('Network error'))
+            .then(data => {
+                if (data.result) {
+                    const sorted = sortResultsByRelevance(data.result, searchTerm);
+                    lastResults = sorted;
+                    lastSearchTerm = searchTerm;
+                    displayResultsWithGenerator(lastResults, lastSearchTerm);
+                } else {
+                    resultTextarea.value = 'Tidak ada hasil.';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                resultTextarea.value = 'Terjadi kesalahan saat mengambil data.';
+            });
+    }
+
+    function performRandomList() {
+        const randomPage = Math.floor(Math.random() * 539) + 1;
+        const url = `https://scrapy-01q.pages.dev/api/list?page=${randomPage}`;
+        fetch(url)
+            .then(response => response.ok ? response.json() : Promise.reject())
+            .then(data => {
+                if (data.result && data.result.files) {
+                    lastResults = data.result.files;
+                    lastSearchTerm = '';
+                    displayResultsWithGenerator(lastResults, '');
+                } else {
+                    resultTextarea.value = 'Tidak ada hasil ditemukan.';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                resultTextarea.value = 'Gagal mengambil random list.';
+            });
+    }
+
+    // sorting relevansi (copy dari fungsi awal)
+    function calculateRelevanceScore(result, searchTerm) {
+        if (!searchTerm || !result.title) return 0;
+        const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(w => w);
+        const title = result.title.toLowerCase();
+        let score = 0;
+        searchWords.forEach(word => {
+            if (title.startsWith(word)) score += 100;
+            else if (title.includes(' ' + word + ' ')) score += 50;
+            else if (title.includes(word)) score += 25;
+        });
+        const wordCount = searchWords.filter(w => title.includes(w)).length;
+        if (wordCount === searchWords.length) score += 30;
+        if (title.length < 50) score += 10;
+        return score;
+    }
+
+    function sortResultsByRelevance(results, searchTerm) {
+        if (!searchTerm || !results) return results;
+        return [...results].map(r => ({ ...r, relevanceScore: calculateRelevanceScore(r, searchTerm) }))
+            .sort((a, b) => b.relevanceScore - a.relevanceScore);
+    }
+
+    // Event binding
+    searchBtn.addEventListener('click', () => performSearch());
+    listBtn.addEventListener('click', () => performRandomList());
+    saveBtn.addEventListener('click', () => {
+        const term = document.getElementById('searchTerm').value;
+        const blob = new Blob([term], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'kata_kunci.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    toggleTitleBtn.addEventListener('click', () => {
+        titlesVisible = !titlesVisible;
+        toggleTitleBtn.textContent = titlesVisible ? 'Sembunyikan Title' : 'Tampilkan Title';
+        if (lastResults) displayResultsWithGenerator(lastResults, lastSearchTerm);
+    });
+
+    regeneratePreviewBtn.addEventListener('click', () => {
+        if (lastResults) {
+            displayResultsWithGenerator(lastResults, lastSearchTerm);
+        } else {
+            alert("Belum ada data hasil pencarian. Cari dulu atau klik Random List.");
+        }
+    });
+
+    // tambahkan input custom random titles (opsional)
+    const customTitlesInput = document.createElement('input');
+    customTitlesInput.type = 'text';
+    customTitlesInput.id = 'customRandomTitles';
+    customTitlesInput.placeholder = 'Judul acak (pisah koma)';
+    customTitlesInput.style.display = 'none';
+    document.body.appendChild(customTitlesInput);
+
+    // Enter untuk search
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') performSearch();
+    });
+
+    // inisialisasi tampilan mode
+    enableGeneratorCheck.addEventListener('change', () => {
+        if (lastResults) displayResultsWithGenerator(lastResults, lastSearchTerm);
+    });
+    document.getElementById('iconStyle')?.addEventListener('change', () => {
+        if (lastResults && enableGeneratorCheck.checked) displayResultsWithGenerator(lastResults, lastSearchTerm);
+    });
+    document.getElementById('rightIconStyle')?.addEventListener('change', () => {
+        if (lastResults && enableGeneratorCheck.checked) displayResultsWithGenerator(lastResults, lastSearchTerm);
+    });
+    document.getElementById('ctaStyle')?.addEventListener('change', () => {
+        if (lastResults && enableGeneratorCheck.checked) displayResultsWithGenerator(lastResults, lastSearchTerm);
+    });
+    showAdditionalCheck.addEventListener('change', () => {
+        if (lastResults) displayResultsWithGenerator(lastResults, lastSearchTerm);
+    });
+    maxWordsInput.addEventListener('change', () => {
+        if (lastResults) displayResultsWithGenerator(lastResults, lastSearchTerm);
+    });
+
+    console.log("✅ Generator JS siap. Gunakan 'Generate Variasi Judul' dengan mode generator aktif.");
+</script>
 </body>
 
 </html>
