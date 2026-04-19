@@ -70,6 +70,7 @@ export async function downloadPage(url, env) {
     type: "website",
   };
 
+  // Cache-Control diatur otomatis oleh withCache di [[path]].js
   return render(desc(TITLES.downloadPage, { title: v.t }), body, null, url, meta);
 }
 

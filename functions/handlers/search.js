@@ -55,6 +55,7 @@ export async function search(url, env) {
 
     const qNorm = norm(qShow);
     const keywords = qNorm.split(/\s+/).filter(w => w.length > 0);
+    const keywordMatches = new Map(keywords.map((k) => [k, 0]));
 
     if (keywords.length === 0) return Response.redirect(origin + "/", 302);
 
@@ -101,6 +102,7 @@ export async function search(url, env) {
                 if (tNorm.includes(kw)) {
                     matchCount++;
                     score += 100;
+                    keywordMatches.set(kw, keywordMatches.get(kw) + 1);
                     if (tNorm.startsWith(kw) || tNorm.includes(" " + kw)) {
                         score += 50;
                     }
@@ -121,6 +123,15 @@ export async function search(url, env) {
                 _score: score,
                 _views: views
             });
+        }
+    }
+
+    const matchedKeywords = keywords.filter((k) => keywordMatches.get(k) > 0);
+
+    if (matchedKeywords.length > 0 && matchedKeywords.length < keywords.length) {
+        const cleanedSlug = matchedKeywords.join('-');
+        if (cleanedSlug !== qSlug) {
+            return Response.redirect(origin + `/f/${cleanedSlug}`, 301);
         }
     }
 
@@ -158,20 +169,8 @@ export async function search(url, env) {
         type: "website",
     };
 
-    const response = render(desc(TITLES.searchPage, { query: escapedQ, total: totalResults, name: CONFIG.name }), body, searchSchema, url, metaData);
-
-    // Apply cache headers only if all keywords match
-    if (hasCompleteKeywordMatch) {
-        const newHeaders = new Headers(response.headers);
-        newHeaders.set('Cache-Control', 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400');
-        return new Response(response.body, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: newHeaders
-        });
-    }
-
-    return response;
+    // Cache-Control diatur otomatis oleh withCache di [[path]].js
+    return render(desc(TITLES.searchPage, { query: escapedQ, total: totalResults, name: CONFIG.name }), body, searchSchema, url, metaData);
 }
 
 function buildSearchSchema(origin, rawQ, page, webpageId, totalResults, res, start, publisherId, websiteId) {

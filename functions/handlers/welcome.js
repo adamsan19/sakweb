@@ -61,7 +61,8 @@ export async function welcome(url, env) {
     type: "website",
   };
 
-  return render(desc(TITLES.welcomePage, { name: CONFIG.name }), body, welcomeSchema, url, metaData);
+    // Cache-Control diatur otomatis oleh withCache di [[path]].js
+    return render(desc(TITLES.welcomePage, { name: CONFIG.name }), body, welcomeSchema, url, metaData);
 }
 
 function buildWelcomeBody(origin) {

@@ -10,6 +10,7 @@ export async function sitemap(url, env) {
   for (let i = 1; i <= pages; i++) {
     out += `<sitemap><loc>${url.origin}/post-sitemap${i}.xml</loc></sitemap>`;
   }
+  // Cache-Control diatur otomatis oleh withCache di [[path]].js
   return new Response(out + "</sitemapindex>", {
     headers: { "content-type": "application/xml" },
   });
@@ -59,7 +60,7 @@ export async function postSitemap(url, env, path) {
     out += `\n<url>\n<loc>${url.origin}/e/${id}</loc>\n<lastmod>${isoDate}</lastmod>\n</url>`;
   }
   out += "\n</urlset>";
-
+  // Cache-Control diatur otomatis oleh withCache di [[path]].js
   return new Response(out, {
     headers: { "content-type": "application/xml" },
   });
@@ -73,6 +74,7 @@ export async function videoSitemap(url, env) {
     if (c++ > 1000) break;
     out += `<url><loc>${url.origin}/e/${id}</loc><video:video><video:title>Video ${id}</video:title></video:video></url>`;
   }
+  // Cache-Control diatur otomatis oleh withCache di [[path]].js
   return new Response(out + "</urlset>", {
     headers: { "content-type": "application/xml" },
   });
@@ -80,6 +82,7 @@ export async function videoSitemap(url, env) {
 
 export function robots(req) {
   const url = new URL(req.url);
+  // Cache-Control diatur otomatis oleh withCache di [[path]].js
   return new Response(
     "User-agent: *\nAllow: /\nSitemap: https://" +
       url.hostname +

@@ -161,6 +161,7 @@ export async function detail(url, env) {
       : DESCRIPTIONS.detailKeywords,
   };
 
+  // Cache-Control diatur otomatis oleh withCache di [[path]].js
   return render(v.t, fullBody, schema, url, meta);
 }
 

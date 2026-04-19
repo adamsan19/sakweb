@@ -56,6 +56,7 @@ export async function list(url, env, pageParam) {
     type: "website",
   };
 
+  // Cache-Control diatur otomatis oleh withCache di [[path]].js
   return render(desc(TITLES.listPage, { page }), body, listSchema, url, metaData);
 }
 
